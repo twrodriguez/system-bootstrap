@@ -1,0 +1,7 @@
+#!/bin/bash
+
+[[ -n "$JAVA_HOME" ]] && echo "$JAVA_HOME" && exit 0
+
+java_path=`which java`
+while test -L "$java_path" && [[ -n "$java_path" ]]; do java_path=`readlink "$java_path"`; done
+echo $(dirname `dirname "$java_path"`)

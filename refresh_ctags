@@ -1,0 +1,2 @@
+#!/bin/bash -e
+ctags -R -e -f .git/tags &> /dev/null &

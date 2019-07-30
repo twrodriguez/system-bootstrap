@@ -1,0 +1,12 @@
+#!/bin/bash -e
+
+text_files=$(find . -type f | xargs file | grep text | awk '{ print $1 }' | grep -o '^[^:]\+')
+
+if [[ `uname -s` == "Darwin" ]]; then
+  for FILE in $text_files; do
+    echo "sed -i '' -E '$1' '$FILE'"
+    sed -i '' -E "$1" "$FILE"
+  done
+else
+  sed -i $1 $text_files
+fi
