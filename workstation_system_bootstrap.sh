@@ -147,9 +147,11 @@ if [[ "$my_method" == "install" ]]; then
       launch_browser 'https://www.virtualbox.org/wiki/Downloads'
 
       set -x
+      brew install caskroom/cask/brew-cask
       brew cask install minikube
+      brew cask install homebrew/cask-versions/adoptopenjdk8
       brew install couchdb p7zip memcached redis postgresql mysql elasticsearch \
-                   kubectl kubernetes-helm docker
+                   kubectl kubernetes-helm docker minio s3cmd apache-spark
       #if [[ "$my_arch_family" == "x86_64" ]]; then
       #  brew install --64bit julia
       #else

@@ -31,9 +31,10 @@ if [[ -d "/home/linuxbrew/.linuxbrew" ]]; then
 fi
 
 # ASDF language version manager
-if [[ -d "$HOME/.asdf" ]]; then
-  . $HOME/.asdf/asdf.sh
-  . $HOME/.asdf/completions/asdf.bash
+asdf_home=`realpath "$(which asdf | xargs dirname)/.."`
+if [[ -d "$asdf_home" ]];then
+  . $asdf_home/asdf.sh
+  . $asdf_home/completions/asdf.bash
 fi
 
 # SSH-Agent for not needing to input passwords every time
@@ -78,6 +79,16 @@ if [[ `uname -s` != "Darwin" ]]; then
   fi
 fi
 
+# Clipboard integration
+if [[ `uname -s` == "Linux" ]]; then
+  if grep -q "Microsoft" "/proc/version"; then
+    export DISPLAY=:0
+    alias pbcopy='xclip -selection clipboard'
+  else
+    alias pbcopy='xclip -selection c'
+  fi
+fi
+
 # User specific aliases and functions
 alias rm='rm -i'
 alias cp='cp -i'
@@ -88,9 +99,6 @@ alias bi='bundle install'
 alias be='bundle exec'
 alias tmux='tmux attach || tmux -2'
 alias git-yolo='git commit -am "DEAL WITH IT #YOLO" && git push -f origin master'
-if [[ `uname -s` == "Linux" ]]; then
-  alias pbcopy='xclip -selection c'
-fi
 alias json-curl='curl -H "Content-Type: application/json" -XPOST'
 alias grep='grep --color'
 alias strip-newline="perl -pe 'chomp if eof'"
@@ -291,6 +299,23 @@ if [[ `uname -s` == "Darwin" && -z "$SSL_CERT_FILE" ]]; then
     export SSL_CERT_FILE="$cert_file"
   fi
 fi
+
+venv() {
+  if [[ -z "$VIRTUAL_ENV" ]]; then
+    if [[ -f "venv/bin/activate" ]]; then
+      . "venv/bin/activate"
+      echo "Virtualenv activated!"
+    elif [[ -f "ENV/bin/activate" ]]; then
+      . "ENV/bin/activate"
+      echo "Virtualenv activated!"
+    else
+      echo "Virtualenv not found"
+    fi
+  else
+    deactivate
+    echo "Virtualenv deactivated!"
+  fi
+}
 
 if test -e "$HOME/ENV/bin/activate"; then
   source "$HOME/ENV/bin/activate"

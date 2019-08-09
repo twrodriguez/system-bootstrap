@@ -37,6 +37,11 @@ install_asdf() {
   cd -
 }
 
+install_asdf_plugins() {
+  # TODO
+  echo ""
+}
+
 install_rust() {
   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 }
@@ -92,7 +97,7 @@ if [[ `uname -s` == "Darwin" ]]; then
   mv "$tmpdir/sed_ri" "$HOME/bin/sed_ri"
   mv "$tmpdir/search" "$HOME/bin/search"
   mv "$tmpdir/pathogen.vim" "$HOME/.vim/autoload"
-  mv "$tmpdir/airline_theme.vim" "$HOME/.vim/autoload/airline/themes/airline_theme.vim"
+#  mv "$tmpdir/airline_theme.vim" "$HOME/.vim/autoload/airline/themes/airline_theme.vim"
   mv "$tmpdir/python.vim" "$HOME/.vim/syntax"
   mv "$tmpdir/pyrex.vim" "$HOME/.vim/syntax"
 elif [[ `uname -s` =~ "MINGW" ]]; then
@@ -141,22 +146,20 @@ if [[ "$my_method" == "install" ]]; then
       brew doctor
 
       set -x
-      brew tap homebrew/versions
-      brew tap homebrew/completions
-      brew tap homebrew/science
       brew tap staticfloat/julia
       brew install caskroom/cask/brew-cask
-      brew install bash-completion ruby imagemagick p7zip python git gsl llvm@6 bison flex \
+      brew install bash-completion ruby imagemagick p7zip python git gsl llvm@6 bison flex pipenv \
                    heroku-toolbelt gcc node vim tmux gs automake autoconf dnsmasq boost graphviz nmap \
-                   libtool libmagic curl-ca-bundle curl wget tesseract readline libxml++ libxml2 \
-                   hunspell libyaml qt4 mercurial cmake htop-osx poppler gem-completion apache-arrow \
+                   libtool libmagic curl wget tesseract readline libxml++ libxml2 groovy ripgrep \
+                   hunspell libyaml mercurial cmake htop-osx poppler gem-completion apache-arrow \
                    pip-completion vagrant-completion ruby-completion rake-completion rails-completion \
-                   bundler-completion scala haskell-platform the_silver_searcher ctags groovy
-      #if [[ "$my_arch_family" == "x86_64" ]]; then
-      #  brew install --64bit julia
-      #else
-      #  brew install julia --with-accelerate
-      #fi
+                   bundler-completion haskell-platform the_silver_searcher ctags s3cmd asdf jq
+
+      if [[ "$my_arch_family" == "x86_64" ]]; then
+        brew install --64bit julia
+      else
+        brew install julia --with-accelerate
+      fi
       set +x
 
       if [[ -e "/usr/local/lib/ImageMagick" ]]; then
@@ -221,7 +224,7 @@ if [[ "$my_method" == "install" ]]; then
                         scala haskell-platform silversearcher-ag exuberant-ctags python3-opengl \
                         xclip libgeos-dev graphviz nmap groovy libboost-all-dev libosmesa6-dev \
                         pkg-config unzip libjpeg-dev swig python-pyglet libsdl2-dev xvfb dos2unix \
-                        python3-pip llvm bison++ flex build-essential file unixodbc-dev
+                        python3-pip llvm bison++ flex build-essential file unixodbc-dev jq
 
       if [[ -n `which snap 2> /dev/null` ]]; then
         snap install rg
@@ -231,6 +234,9 @@ if [[ "$my_method" == "install" ]]; then
       if [[ "$ubuntu_version" == "18.04" ]]; then
         install_arrow_ubuntu18
       fi
+
+      # Install ASDF language version manager
+      install_asdf
 
       set +x
 
@@ -261,9 +267,12 @@ if [[ "$my_method" == "install" ]]; then
                         tesseract-langpack-* postgresql-devel mysql-devel sqlite-devel llvm \
                         mercurial cmake htop poppler-devel ghostscript-devel scala haskell-platform \
                         the_silver_searcher ctags ripgrep geos-devel ipython-notebook graphviz nmap \
-                        golang groovy unixODBC-devel
-      # TODO - Julia Programming Language Install
+                        golang groovy unixODBC-devel jq
+
       # TODO - xclip
+
+      # Install ASDF language version manager
+      install_asdf
 
       set +x
 
@@ -342,12 +351,6 @@ cd "$HOME/.vim/bundle/command-t/ruby/command-t/ext/command-t"
 rbenv exec ruby extconf.rb
 make
 cd -
-
-# Install ASDF language version manager
-install_asdf
-
-# Rust lang install
-install_rust
 
 rm -rf "$tmpdir"
 
