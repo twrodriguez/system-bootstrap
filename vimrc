@@ -86,6 +86,7 @@ set t_Co=256
 let &guicursor = &guicursor . ",a:blinkon0"
 
 au BufNewFile,BufRead *.ctpl set filetype=c
+au BufReadCmd *.jar,*.whl,*.docx,*.xlsx call zip#Browse(expand("<amatch>"))
 set number
 
 " Trailing Whitespace
