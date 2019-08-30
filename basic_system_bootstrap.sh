@@ -31,19 +31,33 @@ vim_git_clone_or_update() {
 }
 
 install_asdf() {
-  git_clone_or_update "https://github.com/asdf-vm/asdf.git" "$HOME/.asdf"
-  cd "$HOME/.asdf"
-  git checkout "$(git describe --abbrev=0 --tags)"
-  cd -
+  if [[ -z `which asdf 2> /dev/null` ]]; then
+    export ASDF_HOME="$HOME/.asdf"
+    git_clone_or_update "https://github.com/asdf-vm/asdf.git" "$ASDF_HOME"
+    cd "$ASDF_HOME"
+    git checkout "$(git describe --abbrev=0 --tags)"
+    . asdf.sh
+    cd -
+  fi
 }
 
-install_asdf_plugins() {
-  # TODO
-  echo ""
+install_latest_asdf_lang() {
+  version=$(asdf list-all "$1" | grep -o "^[0-9.]\+$" | sort -V | tail -1)
+  asdf install "$1" "$version"
+  asdf global "$1" "$version"
 }
 
-install_rust() {
-  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+install_all_asdf_plugins() {
+  all_plugins=(helm kubectl minikube elixir julia kotlin python ruby rust scala)
+  for lang in "${all_plugins[@]}"; do
+    asdf plugin-add "$lang"
+    install_latest_asdf_lang "$lang"
+  done
+
+  # Nodejs has to bootstrap trust
+  asdf plugin-add nodejs
+  bash "$ASDF_HOME/plugins/nodejs/bin/import-release-team-keyring"
+  install_latest_asdf_lang nodejs
 }
 
 install_arrow_ubuntu18() {
@@ -146,20 +160,15 @@ if [[ "$my_method" == "install" ]]; then
       brew doctor
 
       set -x
-      brew tap staticfloat/julia
       brew install caskroom/cask/brew-cask
       brew install bash-completion ruby imagemagick p7zip python git gsl llvm@6 bison flex pipenv \
                    heroku-toolbelt gcc node vim tmux gs automake autoconf dnsmasq boost graphviz nmap \
                    libtool libmagic curl wget tesseract readline libxml++ libxml2 groovy ripgrep \
-                   hunspell libyaml mercurial cmake htop-osx poppler gem-completion apache-arrow \
+                   hunspell libyaml mercurial cmake htop-osx poppler gem-completion apache-arrow gpg \
                    pip-completion vagrant-completion ruby-completion rake-completion rails-completion \
-                   bundler-completion haskell-platform the_silver_searcher ctags s3cmd asdf jq
+                   bundler-completion haskell-platform the_silver_searcher ctags s3cmd asdf jq \
+                   coreutils s3cmd docker
 
-      if [[ "$my_arch_family" == "x86_64" ]]; then
-        brew install --64bit julia
-      else
-        brew install julia --with-accelerate
-      fi
       set +x
 
       if [[ -e "/usr/local/lib/ImageMagick" ]]; then
@@ -174,22 +183,6 @@ if [[ "$my_method" == "install" ]]; then
         set +x
         cd -
       fi
-
-      if [[ `gem list -i facets` == "false" || `gem list facets | grep "facets" | grep -o "[\.0-9]\+"` == "2.9.3" ]]; then
-        mkdir -p /tmp
-        cd /tmp
-        set -x
-        git clone https://github.com/twrodriguez/facets.git
-        cd -
-        cd /tmp/facets
-        git checkout extend_patch_2_9_3
-        gem build facets.gemspec
-        gem uninstall facets
-        gem install --no-ri --no-rdoc facets-2.9.3.1.gem
-        set +x
-        cd -
-      fi
-
     else
       echo "Couldn't find 'brew' command. It's highly recommended that you use 'http://brew.sh'"
       unknown_install_method && exit 1
@@ -219,12 +212,12 @@ if [[ "$my_method" == "install" ]]; then
                         vim curl wget ca-certificates f2c tmux eclipse libxml++-dev libhunspell-dev \
                         hunspell-dictionary-* libxml2-dev libyaml-dev libreadline-dev tesseract-ocr-* \
                         libssl-dev liblapack-dev libmysql++-dev libpq-dev libgsl-dev python3-dev \
-                        postgresql-contrib sqlite3 libsqlite-dev postgresql-client mercurial zip \
+                        postgresql-contrib sqlite3 libsqlite-dev postgresql-client mercurial zip gpg \
                         cmake htop poppler-utils poppler-data libpoppler-dev libgs-dev ghostscript \
-                        scala haskell-platform silversearcher-ag exuberant-ctags python3-opengl \
-                        xclip libgeos-dev graphviz nmap groovy libboost-all-dev libosmesa6-dev \
+                        scala haskell-platform silversearcher-ag exuberant-ctags python3-opengl dirmngr \
+                        xclip libgeos-dev graphviz nmap groovy libboost-all-dev libosmesa6-dev llvm-8 \
                         pkg-config unzip libjpeg-dev swig python-pyglet libsdl2-dev xvfb dos2unix \
-                        python3-pip llvm bison++ flex build-essential file unixodbc-dev jq
+                        python3-pip llvm bison++ flex build-essential file unixodbc-dev jq clang-8
 
       if [[ -n `which snap 2> /dev/null` ]]; then
         snap install rg
@@ -269,7 +262,7 @@ if [[ "$my_method" == "install" ]]; then
                         the_silver_searcher ctags ripgrep geos-devel ipython-notebook graphviz nmap \
                         golang groovy unixODBC-devel jq
 
-      # TODO - xclip
+      # TODO - xclip, clang, llvm, gpg, dirmngr
 
       # Install ASDF language version manager
       install_asdf
@@ -284,36 +277,18 @@ if [[ "$my_method" == "install" ]]; then
   fi
 fi
 
+install_all_asdf_plugins
+
 # Install pylint
-pip install pylint virtualenv git-lint pipenv
+pip install pylint git-lint pipenv
 
 # Set up chef environment
-if test ! -d "$HOME/.rbenv/plugins/ruby-build"; then
-  git clone https://github.com/sstephenson/ruby-build.git "$HOME/.rbenv/plugins/ruby-build"
-fi
-if [[ -z `rbenv versions | grep "2\.6\.0"` ]]; then
-  rbenv install 2.6.0
-  rbenv rehash
-fi
-rbenv global 2.6.0
-gem install --no-ri --no-rdoc chef multi_json knife-ec2 berkshelf bundler foodcritic flog reek ruby-lint rubocop sass
-
-
-# Install NVM
-git clone "https://github.com/creationix/nvm.git" "$HOME/.nvm"
-cd "$HOME/.nvm"
-git checkout v0.34.0
-. nvm.sh
-cd -
+gem install --no-ri --no-rdoc bundler flog reek ruby-lint rubocop sass
 
 # Install JS command line tools
-nvm install node
-nvm use node
 npm install -g uglify-js less coffee-script grunt-cli csslint jshint eslint babel-eslint eslint-plugin-react
 
 # Install Vim plugins
-
-# Syntastic
 vim_git_clone_or_update "https://github.com/scrooloose/nerdtree.git"
 vim_git_clone_or_update "https://github.com/scrooloose/nerdcommenter.git"
 vim_git_clone_or_update "https://github.com/scrooloose/syntastic.git"

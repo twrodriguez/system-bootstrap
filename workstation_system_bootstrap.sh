@@ -58,6 +58,20 @@ install_kubernetes_linux() {
   helm init
 }
 
+install_latest_asdf_lang() {
+  version=$(asdf list-all "$1" | grep -o "^[0-9.]\+$" | sort -V | tail -1)
+  asdf install "$1" "$version"
+  asdf global "$1" "$version"
+}
+
+install_all_asdf_plugins() {
+  all_plugins=(postgres mysql elasticsearch spark redis)
+  for lang in "${all_plugins[@]}"; do
+    asdf plugin-add "$lang"
+    install_latest_asdf_lang "$lang"
+  done
+}
+
 tmpdir="$HOME/bootstrap_tmp"
 
 mkdir -p $tmpdir
@@ -144,19 +158,14 @@ if [[ "$my_method" == "install" ]]; then
 
       brew doctor
 
-      launch_browser 'https://www.virtualbox.org/wiki/Downloads'
-
       set -x
       brew install caskroom/cask/brew-cask
-      brew cask install minikube
       brew cask install homebrew/cask-versions/adoptopenjdk8
-      brew install couchdb p7zip memcached redis postgresql mysql elasticsearch \
-                   kubectl kubernetes-helm docker minio s3cmd apache-spark
-      #if [[ "$my_arch_family" == "x86_64" ]]; then
-      #  brew install --64bit julia
-      #else
-      #  brew install julia --with-accelerate
-      #fi
+      brew cask install virtualbox
+      brew cask install vagrant
+      brew install couchdb p7zip memcached minio
+
+      install_all_asdf_plugins
       set +x
 
     else

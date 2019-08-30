@@ -36,10 +36,12 @@ if [[ -d "/home/linuxbrew/.linuxbrew" ]]; then
 fi
 
 # ASDF language version manager
-asdf_home=`realpath "$(which asdf | xargs dirname)/.."`
-if [[ -d "$asdf_home" ]];then
-  . $asdf_home/asdf.sh
-  . $asdf_home/completions/asdf.bash
+if [[ -n `which asdf 2> /dev/null` ]]; then
+  export ASDF_HOME=`realpath "$(which asdf | xargs dirname)/.."`
+  if [[ -d "$ASDF_HOME" ]];then
+    . $ASDF_HOME/asdf.sh
+    . $ASDF_HOME/completions/asdf.bash
+  fi
 fi
 
 # SSH-Agent for not needing to input passwords every time
