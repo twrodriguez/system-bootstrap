@@ -16,7 +16,12 @@ if [[ `uname -s` == "Darwin" ]]; then
   export HISTSIZE=
   export HISTFILESIZE=
 fi
-PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/local/heroku/bin:$PATH
+WIN_HOME="/mnt/c/Users/Tim"
+PATH=$WIN_HOME/bin:$HOME/bin:$HOME/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/local/heroku/bin:$PATH
+if [[ -d "/mnt/c/Users/Tim" ]]; then
+  mkdir -p "$WIN_HOME/bin"
+  export WIN_HOME
+fi
 PKG_CONFIG_PATH=$PATH
 EDITOR=vim
 if [[ -z "$SKIP_RBENV" ]]; then
