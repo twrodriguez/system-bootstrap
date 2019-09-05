@@ -28,6 +28,19 @@ launch_browser_to_download() {
   launch_browser "$1" "$2" "and install $1 for your platform"
 }
 
+setup_kubernetes() {
+  # Set up kubernetes
+  minikube config set disk-size 60g
+  minikube config set memory 4096
+  minikube config set cpus 2
+  minikube config set vm-driver virtualbox
+  minikube addons enable heapster
+  minikube addons enable ingress
+  minikube addons enable metrics-server
+  minikube start
+  helm init
+}
+
 install_kubernetes_linux() {
   # Minikube
   if test ! -e "$HOME/minikube"; then
@@ -45,17 +58,6 @@ install_kubernetes_linux() {
     chmod +x "$HOME/.helm/helm_install"
     "$HOME/.helm/helm_install" --version 'latest'
   fi
-
-  # Set up kubernetes
-  minikube config set disk-size 60g
-  minikube config set memory 4096
-  minikube config set cpus 2
-  minikube config set vm-driver virtualbox
-  minikube addons enable heapster
-  minikube addons enable ingress
-  minikube addons enable metrics-server
-  minikube start
-  helm init
 }
 
 install_latest_asdf_lang() {
@@ -163,7 +165,7 @@ if [[ "$my_method" == "install" ]]; then
       brew cask install homebrew/cask-versions/adoptopenjdk8
       brew cask install virtualbox
       brew cask install vagrant
-      brew install couchdb p7zip memcached minio
+      brew install minio
 
       install_all_asdf_plugins
       set +x
@@ -180,10 +182,6 @@ if [[ "$my_method" == "install" ]]; then
       set -x
       if [[ -n `which add-apt-repository 2> /dev/null` ]]; then
         sudo add-apt-repository ppa:openjdk-r/ppa
-      #  if [[ -z `ls /etc/apt/sources.list.d/ 2> /dev/null | grep "elasticsearch"` ]]; then
-      #    wget -qO - https://packages.elasticsearch.org/GPG-KEY-elasticsearch | apt-key add -
-      #    add-apt-repository -y "deb http://packages.elasticsearch.org/elasticsearch/1.4/debian stable main"
-      #  fi
 
         if [[ -z `ls /etc/apt/sources.list.d/ 2> /dev/null | grep "oracle"` ]]; then
           # Virtualbox
@@ -197,24 +195,25 @@ if [[ "$my_method" == "install" ]]; then
 
       sudo apt-get upgrade -y
 
-      sudo $my_install binutils gcc rbenv libxslt-dev python python-dev openjdk-8-jdk snap virtualbox-5.2 \
-                        python-pip git imagemagick libmagickcore-dev libmagickwand-dev couchdb \
-                        memcached redis-server p7zip-full lsb gfortran dnsmasq nodejs libmagic-dev golang-go \
+      sudo $my_install binutils gcc libxslt-dev python-dev openjdk-8-jdk snap virtualbox-5.2 \
+                        python-pip git imagemagick libmagickcore-dev libmagickwand-dev \
+                        p7zip-full lsb gfortran dnsmasq libmagic-dev \
                         vim curl wget ca-certificates f2c tmux eclipse libxml++-dev libhunspell-dev \
                         hunspell-dictionary-* libxml2-dev libyaml-dev libreadline-dev tesseract-ocr-* \
                         libssl-dev liblapack-dev postgresql mysql-server libmysql++-dev libpq-dev \
-                        postgresql-contrib pgadmin3 sqlite3 libsqlite-dev postgresql-client mercurial \
+                        postgresql-contrib pgadmin3 sqlite3 libsqlite-dev postgresql-client \
                         cmake htop poppler-utils poppler-data libpoppler-dev libgs-dev ghostscript \
-                        scala haskell-platform julia elasticsearch silversearcher-ag exuberant-ctags \
+                        exuberant-ctags \
                         golang-go docker.io xclip libgeos-dev ipython-notebook graphviz nmap kvm libvirt-bin \
-                        docker-compose groovy mongodb
+                        docker-compose mongodb
 
       if [[ -n `which snap 2> /dev/null` ]]; then
         snap install rg
         snap install slack --classic
       fi
 
-      install_kubernetes_linux
+      #install_kubernetes_linux
+      setup_kubernetes
 
       sudo usermod -a -G libvirtd $(whoami)
       newgrp libvirtd
@@ -225,18 +224,6 @@ if [[ "$my_method" == "install" ]]; then
 
       # TODO - Setup adobe flash repos? Dropbox? Chrome?
 
-      #if [[ -z `ls /etc/yum.repos.d/ 2> /dev/null | grep "elasticsearch"` ]]; then
-        #rpm --import https://packages.elasticsearch.org/GPG-KEY-elasticsearch
-        #cat > /etc/yum.repos.d/elasticsearch.repo << EOF
-#[elasticsearch-1.4]
-#name=Elasticsearch repository for 1.4.x packages
-#baseurl=http://packages.elasticsearch.org/elasticsearch/1.4/centos
-#gpgcheck=1
-#gpgkey=http://packages.elasticsearch.org/GPG-KEY-elasticsearch
-#enabled=1
-#EOF
-      #fi
-
       if [[ -z `ls /etc/yum.repos.d/ 2> /dev/null | grep "virtualbox"` ]]; then
         sudo wget -q https://download.virtualbox.org/virtualbox/rpm/fedora/virtualbox.repo -O /etc/yum.repos.d/virtualbox.repo
       fi
@@ -244,28 +231,23 @@ if [[ "$my_method" == "install" ]]; then
       set -x
 
       sudo $my_pkg_mgr update -y
-      sudo $my_install binutils* gcc rbenv elasticsearch libxslt-devel python python-devel python-pip \
-                        git ImageMagick-devel couchdb memcached redis p7zip @development-tools \
-                        kernel-devel openssl nodejs npm dnsmasq file-libs redhat-lsb vim curl wget \
+      sudo $my_install binutils* gcc libxslt-devel python-devel python-pip \
+                        git @development-tools \
+                        kernel-devel openssl dnsmasq file-libs redhat-lsb vim curl wget \
                         f2c tmux eclipse tar curl libxml++-devel hunspell-* tesseract-devel snapd \
                         libxml-devel zlib-devel libyaml-devel readline-devel openssl-devel lapack-devel \
                         tesseract-langpack-* postgresql-devel postgresql-server mysql-devel sqlite-devel \
-                        mercurial cmake htop poppler-devel ghostscript-devel scala haskell-platform \
-                        the_silver_searcher ctags ripgrep geos-devel ipython-notebook graphviz nmap \
-                        qemu-kvm virt-manager virt-install golang docker groovy mongodb
-      # TODO - Julia Programming Language Install
-      # TODO - Go lang install
-      # TODO - Rust lang install
-      # TODO - Docker
-      # TODO - xclip
+                        cmake htop poppler-devel ghostscript-devel \
+                        ctags ripgrep geos-devel ipython-notebook graphviz nmap \
+                        qemu-kvm virt-manager virt-install docker mongodb
 
       if [[ -n `which snap 2> /dev/null` ]]; then
         # sudo ln -s /var/lib/snapd/snap /snap
-        snap install kubectl --classic
         snap install slack --classic
       fi
 
-      install_kubernetes_linux
+      #install_kubernetes_linux
+      setup_kubernetes
 
       sudo usermod -a -G libvirt $(whoami)
       newgrp libvirtd
@@ -279,78 +261,6 @@ if [[ "$my_method" == "install" ]]; then
     echo "Don't know how to setup for this system"
   fi
 fi
-
-# Install pylint
-pip install pylint virtualenv git-lint
-
-# Set up chef environment
-if test ! -d "$HOME/.rbenv/plugins/ruby-build"; then
-  git clone https://github.com/sstephenson/ruby-build.git "$HOME/.rbenv/plugins/ruby-build"
-fi
-if [[ -z `rbenv versions | grep "2\.4\.1"` ]]; then
-  rbenv install 2.4.1
-  rbenv rehash
-fi
-rbenv global 2.4.1
-gem install --no-ri --no-rdoc chef multi_json knife-ec2 berkshelf bundler foodcritic flog reek ruby-lint rubocop sass
-
-
-# Install NVM
-git clone "https://github.com/creationix/nvm.git" "$HOME/.nvm"
-cd "$HOME/.nvm"
-git checkout v0.33.8
-. nvm.sh
-cd -
-
-# Install JS command line tools
-nvm install node
-nvm use node
-npm install -g uglify-js less coffee-script grunt-cli csslint jshint eslint babel-eslint eslint-plugin-react
-
-# Install Google's Closure Linter
-easy_install http://closure-linter.googlecode.com/files/closure_linter-latest.tar.gz
-
-# Install Vim plugins
-
-# Syntastic
-cd "$HOME/.vim/bundle"
-git clone "https://github.com/scrooloose/nerdtree.git"
-git clone "https://github.com/scrooloose/nerdcommenter.git"
-git clone "https://github.com/scrooloose/syntastic.git"
-git clone "https://github.com/ervandew/supertab.git"
-git clone "https://github.com/tpope/vim-rails.git"
-git clone "https://github.com/tpope/vim-bundler.git"
-git clone "https://github.com/moll/vim-node.git"
-git clone "https://github.com/docunext/closetag.vim.git" closetag
-git clone "https://github.com/maksimr/vim-jsbeautify.git"
-git clone "https://github.com/terryma/vim-multiple-cursors.git"
-git clone "https://github.com/mbbill/undotree.git"
-git clone "https://github.com/mhinz/vim-signify.git"
-git clone "https://github.com/tpope/vim-fugitive.git"
-git clone "https://github.com/bling/vim-airline.git"
-git clone "https://github.com/dyng/ctrlsf.vim.git"
-#git clone "https://github.com/myusuf3/numbers.vim.git" numbers
-git clone "https://github.com/powerline/fonts.git" powerline-fonts
-git clone "https://github.com/vim-airline/vim-airline-themes"
-git clone "https://github.com/mxw/vim-jsx.git"
-git clone "https://github.com/leafgarland/typescript-vim.git"
-git clone "https://github.com/nathanaelkane/vim-indent-guides.git"
-git clone "https://github.com/kien/rainbow_parentheses.vim.git" rainbow_parentheses
-git clone "https://github.com/wincent/command-t.git"
-git clone "https://github.com/derekwyatt/vim-scala"
-cd -
-cd "$HOME/.vim/bundle/vim-jsbeautify"
-git submodule update --init --recursive
-cd -
-
-cd "$HOME/.vim/bundle/powerline-fonts"
-./install.sh
-cd -
-
-cd "$HOME/.vim/bundle/command-t/ruby/command-t/ext/command-t"
-rbenv exec ruby extconf.rb
-make
-cd -
 
 rm -rf "$tmpdir"
 

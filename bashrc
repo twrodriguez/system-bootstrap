@@ -9,7 +9,6 @@ fi
 
 # Load RVM into a shell session *as a function*
 #[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
-PATH=$PATH:$HOME/.rvm/bin # Add RVM to PATH for scripting
 if [[ `uname -s` == "Darwin" ]]; then
   PATH=$PATH:/usr/local/opt/ruby/bin:/usr/local/share/npm/bin # Add Homebrew Ruby & Node Bin to PATH
   PATH=/usr/local/opt/libxml2/lib/pkgconfig:$PATH
@@ -24,11 +23,6 @@ if [[ -d "/mnt/c/Users/Tim" ]]; then
 fi
 PKG_CONFIG_PATH=$PATH
 EDITOR=vim
-if [[ -z "$SKIP_RBENV" ]]; then
-  if which rbenv > /dev/null; then
-    eval "$(rbenv init -)"
-  fi
-fi
 
 # Linuxbrew
 if [[ -d "/home/linuxbrew/.linuxbrew" ]]; then
@@ -46,13 +40,6 @@ fi
 
 # SSH-Agent for not needing to input passwords every time
 if which ssh-agent > /dev/null; then eval "$(ssh-agent -s)"; fi
-
-# NVM
-if test -d "$HOME/.nvm"; then
-  export NVM_DIR="$HOME/.nvm"
-  test -s "$NVM_DIR/nvm.sh" && . "$NVM_DIR/nvm.sh"  # This loads nvm
-  test -s "$NVM_DIR/bash_completion" && . "$NVM_DIR/bash_completion"
-fi
 
 export HOMEBREW_GITHUB_API_TOKEN=`cat "$HOME/.github_api_token"`
 
@@ -323,7 +310,3 @@ venv() {
     echo "Virtualenv deactivated!"
   fi
 }
-
-if test -e "$HOME/ENV/bin/activate"; then
-  source "$HOME/ENV/bin/activate"
-fi

@@ -73,6 +73,22 @@ APT_LINE
   sudo apt install -y -V libarrow-dev libarrow-glib-dev libplasma-dev libplasma-glib-dev libgandiva-dev libgandiva-glib-dev libparquet-dev libparquet-glib-dev
 }
 
+install_arrow_centos() {
+  sudo tee /etc/yum.repos.d/Apache-Arrow.repo <<REPO
+[apache-arrow]
+name=Apache Arrow
+baseurl=https://dl.bintray.com/apache/arrow/centos/\$releasever/\$basearch/
+gpgcheck=1
+enabled=1
+gpgkey=https://dl.bintray.com/apache/arrow/centos/RPM-GPG-KEY-apache-arrow
+REPO
+  sudo yum install -y epel-release
+  sudo yum install -y --enablerepo=epel arrow-devel # For C++
+  sudo yum install -y --enablerepo=epel arrow-glib-devel # For GLib (C)
+  sudo yum install -y --enablerepo=epel parquet-devel # For Apache Parquet C++
+  sudo yum install -y --enablerepo=epel parquet-glib-devel # For Parquet GLib (C)
+}
+
 tmpdir="$HOME/bootstrap_tmp"
 
 mkdir -p $tmpdir
@@ -160,14 +176,13 @@ if [[ "$my_method" == "install" ]]; then
       brew doctor
 
       set -x
-      brew install caskroom/cask/brew-cask
       brew install bash-completion ruby imagemagick p7zip python git gsl llvm@6 bison flex pipenv \
                    heroku-toolbelt gcc node vim tmux gs automake autoconf dnsmasq boost graphviz nmap \
-                   libtool libmagic curl wget tesseract readline libxml++ libxml2 groovy ripgrep \
-                   hunspell libyaml mercurial cmake htop-osx poppler gem-completion apache-arrow gpg \
+                   libtool libmagic curl wget tesseract readline libxml++ libxml2 groovy ripgrep gpg \
+                   hunspell libyaml cmake htop-osx poppler gem-completion apache-arrow parquet-tools \
                    pip-completion vagrant-completion ruby-completion rake-completion rails-completion \
                    bundler-completion haskell-platform the_silver_searcher ctags s3cmd asdf jq \
-                   coreutils s3cmd docker
+                   coreutils s3cmd docker docker-compose openssl libffi pkg-config
 
       set +x
 
@@ -193,16 +208,6 @@ if [[ "$my_method" == "install" ]]; then
       # TODO - Setup adobe flash repos? Dropbox? Chrome?
 
       set -x
-      if [[ -n `which add-apt-repository 2> /dev/null` ]]; then
-      #  sudo add-apt-repository ppa:openjdk-r/ppa
-
-      #  if [[ -z `ls /etc/apt/sources.list.d/ 2> /dev/null | grep "elasticsearch"` ]]; then
-      #    wget -qO - https://packages.elasticsearch.org/GPG-KEY-elasticsearch | apt-key add -
-      #    add-apt-repository -y "deb http://packages.elasticsearch.org/elasticsearch/1.4/debian stable main"
-      #  fi
-
-        sudo apt-get update
-      fi
 
       sudo apt-get upgrade -y
 
@@ -212,12 +217,13 @@ if [[ "$my_method" == "install" ]]; then
                         vim curl wget ca-certificates f2c tmux eclipse libxml++-dev libhunspell-dev \
                         hunspell-dictionary-* libxml2-dev libyaml-dev libreadline-dev tesseract-ocr-* \
                         libssl-dev liblapack-dev libmysql++-dev libpq-dev libgsl-dev python3-dev \
-                        postgresql-contrib sqlite3 libsqlite-dev postgresql-client mercurial zip gpg \
+                        postgresql-contrib sqlite3 libsqlite-dev postgresql-client zip gpg dirmngr \
                         cmake htop poppler-utils poppler-data libpoppler-dev libgs-dev ghostscript \
-                        scala haskell-platform silversearcher-ag exuberant-ctags python3-opengl dirmngr \
+                        scala haskell-platform silversearcher-ag exuberant-ctags python3-opengl \
                         xclip libgeos-dev graphviz nmap groovy libboost-all-dev libosmesa6-dev llvm-8 \
                         pkg-config unzip libjpeg-dev swig python-pyglet libsdl2-dev xvfb dos2unix \
-                        python3-pip llvm bison++ flex build-essential file unixodbc-dev jq clang-8
+                        python3-pip bison++ flex build-essential file unixodbc-dev jq clang-8 \
+                        libffi-dev libsasl2-dev libldap2-dev
 
       if [[ -n `which snap 2> /dev/null` ]]; then
         snap install rg
@@ -237,32 +243,21 @@ if [[ "$my_method" == "install" ]]; then
 
       # TODO - Setup adobe flash repos? Dropbox? Chrome?
 
-      #if [[ -z `ls /etc/yum.repos.d/ 2> /dev/null | grep "elasticsearch"` ]]; then
-        #rpm --import https://packages.elasticsearch.org/GPG-KEY-elasticsearch
-        #cat > /etc/yum.repos.d/elasticsearch.repo << EOF
-#[elasticsearch-1.4]
-#name=Elasticsearch repository for 1.4.x packages
-#baseurl=http://packages.elasticsearch.org/elasticsearch/1.4/centos
-#gpgcheck=1
-#gpgkey=http://packages.elasticsearch.org/GPG-KEY-elasticsearch
-#enabled=1
-#EOF
-      #fi
-
       set -x
 
       sudo $my_pkg_mgr update -y
-      sudo $my_install binutils* gcc rbenv libxslt-devel python python-devel python-pip \
-                        git ImageMagick-devel p7zip @development-tools gsl-devel pipenv \
-                        kernel-devel openssl nodejs npm dnsmasq file-libs redhat-lsb vim curl wget \
+      sudo $my_install binutils* gcc rbenv libxslt-devel python python-devel python-pip wget \
+                        git ImageMagick-devel p7zip @development-tools gsl-devel pipenv nmap \
+                        kernel-devel openssl nodejs npm dnsmasq file-libs redhat-lsb vim curl \
                         f2c tmux tar curl libxml++-devel hunspell-* tesseract-devel snapd \
-                        libxml-devel zlib-devel libyaml-devel readline-devel openssl-devel lapack-devel \
-                        tesseract-langpack-* postgresql-devel mysql-devel sqlite-devel llvm \
-                        mercurial cmake htop poppler-devel ghostscript-devel scala haskell-platform \
-                        the_silver_searcher ctags ripgrep geos-devel ipython-notebook graphviz nmap \
-                        golang groovy unixODBC-devel jq
+                        libxml-devel zlib-devel libyaml-devel readline-devel openssl-devel \
+                        tesseract-langpack-* postgresql-devel mysql-devel sqlite-devel xclip \
+                        cmake htop poppler-devel ghostscript-devel scala haskell-platform \
+                        the_silver_searcher ctags ripgrep geos-devel ipython-notebook graphviz \
+                        golang groovy unixODBC-devel jq lapack-devel gcc-c++ libffi-devel \
+                        openldap-devel libsasl2-devel gnupg clang llvm-devel dirmngr
 
-      # TODO - xclip, clang, llvm, gpg, dirmngr
+      install_arrow_centos
 
       # Install ASDF language version manager
       install_asdf
