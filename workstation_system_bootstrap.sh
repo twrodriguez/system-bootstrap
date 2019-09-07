@@ -14,18 +14,14 @@ install_config_file() {
 launch_browser() {
   # Launch Browser
   if [[ "$my_platform" == "linux" ]]; then
-    xdg-open "$2"
+    xdg-open "$1"
   elif [[ "$my_platform" == "darwin" ]]; then
-    open -a "$(/usr/local/bin/DefaultApplication -url 'http:')" "$2"
+    open "$1"
   else
-    echo "Please visit '$2'$3"
+    echo "Please visit '$1'"
   fi
   echo "Press Enter to continue"
   read
-}
-
-launch_browser_to_download() {
-  launch_browser "$1" "$2" "and install $1 for your platform"
 }
 
 setup_kubernetes() {
@@ -43,33 +39,36 @@ setup_kubernetes() {
 
 install_kubernetes_linux() {
   # Minikube
-  if test ! -e "$HOME/minikube"; then
-    curl -Lo "$HOME/minikube" "https://storage.googleapis.com/minikube/releases/v0.28.0/minikube-linux-amd64"
-    chmod +x "$HOME/minikube"
-  fi
+  # if test ! -e "$HOME/minikube"; then
+  #   curl -Lo "$HOME/minikube" "https://storage.googleapis.com/minikube/releases/v0.28.0/minikube-linux-amd64"
+  #   chmod +x "$HOME/minikube"
+  # fi
 
   # Kubectl
-  snap install kubectl --classic
+  # snap install kubectl --classic
 
   # Helm
-  if ! command -v helm; then
-    mkdir -p "$HOME/.helm"
-    curl -Lo "$HOME/.helm/helm_install" "https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get"
-    chmod +x "$HOME/.helm/helm_install"
-    "$HOME/.helm/helm_install" --version 'latest'
-  fi
+  # if ! command -v helm; then
+  #   mkdir -p "$HOME/.helm"
+  #   curl -Lo "$HOME/.helm/helm_install" "https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get"
+  #   chmod +x "$HOME/.helm/helm_install"
+  #   "$HOME/.helm/helm_install" --version 'latest'
+  # fi
+  install_latest_asdf_lang "minikube"
+  install_latest_asdf_lang "kubectl"
+  install_latest_asdf_lang "helm"
 }
 
 install_latest_asdf_lang() {
+  asdf plugin-add "$1"
   version=$(asdf list-all "$1" | grep -o "^[0-9.]\+$" | sort -V | tail -1)
   asdf install "$1" "$version"
   asdf global "$1" "$version"
 }
 
 install_all_asdf_plugins() {
-  all_plugins=(postgres mysql elasticsearch spark redis)
+  all_plugins=(postgres mysql elasticsearch spark redis mongodb)
   for lang in "${all_plugins[@]}"; do
-    asdf plugin-add "$lang"
     install_latest_asdf_lang "$lang"
   done
 }
@@ -195,17 +194,15 @@ if [[ "$my_method" == "install" ]]; then
 
       sudo apt-get upgrade -y
 
-      sudo $my_install binutils gcc libxslt-dev python-dev openjdk-8-jdk snap virtualbox-5.2 \
-                        python-pip git imagemagick libmagickcore-dev libmagickwand-dev \
-                        p7zip-full lsb gfortran dnsmasq libmagic-dev \
-                        vim curl wget ca-certificates f2c tmux eclipse libxml++-dev libhunspell-dev \
-                        hunspell-dictionary-* libxml2-dev libyaml-dev libreadline-dev tesseract-ocr-* \
-                        libssl-dev liblapack-dev postgresql mysql-server libmysql++-dev libpq-dev \
-                        postgresql-contrib pgadmin3 sqlite3 libsqlite-dev postgresql-client \
-                        cmake htop poppler-utils poppler-data libpoppler-dev libgs-dev ghostscript \
-                        exuberant-ctags \
-                        golang-go docker.io xclip libgeos-dev ipython-notebook graphviz nmap kvm libvirt-bin \
-                        docker-compose mongodb
+      sudo $my_install binutils ca-certificates cmake curl dnsmasq docker-compose docker.io eclipse \
+                        exuberant-ctags f2c gcc gfortran ghostscript git graphviz htop wget xclip \
+                        hunspell-dictionary-* imagemagick ipython-notebook kvm libgeos-dev \
+                        libgs-dev libhunspell-dev liblapack-dev libmagic-dev libmagickcore-dev \
+                        libmagickwand-dev libmysql++-dev libpoppler-dev libpq-dev libreadline-dev \
+                        libsqlite-dev libssl-dev libvirt-bin libxml++-dev libxml2-dev libxslt-dev \
+                        libyaml-dev lsb memcached mercurial mysql-server nmap openjdk-8-jdk p7zip-full \
+                        pgadmin3 poppler-data poppler-utils postgresql-client postgresql-contrib \
+                        python-dev python-pip snap sqlite3 tesseract-ocr-* tmux vim virtualbox-5.2
 
       if [[ -n `which snap 2> /dev/null` ]]; then
         snap install rg
@@ -231,15 +228,16 @@ if [[ "$my_method" == "install" ]]; then
       set -x
 
       sudo $my_pkg_mgr update -y
-      sudo $my_install binutils* gcc libxslt-devel python-devel python-pip \
-                        git @development-tools \
-                        kernel-devel openssl dnsmasq file-libs redhat-lsb vim curl wget \
-                        f2c tmux eclipse tar curl libxml++-devel hunspell-* tesseract-devel snapd \
-                        libxml-devel zlib-devel libyaml-devel readline-devel openssl-devel lapack-devel \
-                        tesseract-langpack-* postgresql-devel postgresql-server mysql-devel sqlite-devel \
-                        cmake htop poppler-devel ghostscript-devel \
-                        ctags ripgrep geos-devel ipython-notebook graphviz nmap \
-                        qemu-kvm virt-manager virt-install docker mongodb
+      sudo $my_install @development-tools ImageMagick-devel binutils* cmake couchdb ctags curl \
+                        dnsmasq docker eclipse f2c file-libs gcc geos-devel ghostscript-devel \
+                        git graphviz htop hunspell-* ipython-notebook kernel-devel lapack-devel \
+                        libxml++-devel libxml-devel libxslt-devel libyaml-devel memcached \
+                        mercurial mongodb mysql-devel nmap openssl openssl-devel p7zip \
+                        poppler-devel postgresql-devel postgresql-server python python-devel \
+                        python-pip qemu-kvm readline-devel redhat-lsb ripgrep scala snapd \
+                        sqlite-devel tar tesseract-devel tesseract-langpack-* tmux vim \
+                        virt-install virt-manager wget zlib-devel
+
 
       if [[ -n `which snap 2> /dev/null` ]]; then
         # sudo ln -s /var/lib/snapd/snap /snap

@@ -48,7 +48,8 @@ install_latest_asdf_lang() {
 }
 
 install_all_asdf_plugins() {
-  all_plugins=(helm kubectl minikube elixir julia kotlin python ruby rust scala)
+  # TODO: Imagemagick?
+  all_plugins=(helm kubectl minikube elixir julia kotlin python ruby rust scala golang groovy haskell R)
   for lang in "${all_plugins[@]}"; do
     asdf plugin-add "$lang"
     install_latest_asdf_lang "$lang"
@@ -178,11 +179,11 @@ if [[ "$my_method" == "install" ]]; then
       set -x
       brew install bash-completion ruby imagemagick p7zip python git gsl llvm@6 bison flex pipenv \
                    heroku-toolbelt gcc node vim tmux gs automake autoconf dnsmasq boost graphviz nmap \
-                   libtool libmagic curl wget tesseract readline libxml++ libxml2 groovy ripgrep gpg \
-                   hunspell libyaml cmake htop-osx poppler gem-completion apache-arrow parquet-tools \
+                   libtool libmagic curl wget tesseract readline libxml++ libxml2 ripgrep \
+                   hunspell libyaml cmake htop-osx poppler gem-completion apache-arrow gpg \
                    pip-completion vagrant-completion ruby-completion rake-completion rails-completion \
-                   bundler-completion haskell-platform the_silver_searcher ctags s3cmd asdf jq \
-                   coreutils s3cmd docker docker-compose openssl libffi pkg-config
+                   bundler-completion ctags s3cmd asdf jq coreutils s3cmd docker parquet-tools \
+                   pkg-config libffi openssl docker-compose
 
       set +x
 
@@ -213,17 +214,16 @@ if [[ "$my_method" == "install" ]]; then
 
       sudo $my_install binutils gcc rbenv libxslt-dev python python-dev openjdk-8-jdk snap patchelf \
                         python-pip git imagemagick libmagickcore-dev libmagickwand-dev zlib1g-dev \
-                        p7zip-full lsb gfortran dnsmasq nodejs libmagic-dev golang-go g++ ffmpeg \
+                        p7zip-full lsb gfortran dnsmasq nodejs libmagic-dev g++ ffmpeg \
                         vim curl wget ca-certificates f2c tmux eclipse libxml++-dev libhunspell-dev \
                         hunspell-dictionary-* libxml2-dev libyaml-dev libreadline-dev tesseract-ocr-* \
                         libssl-dev liblapack-dev libmysql++-dev libpq-dev libgsl-dev python3-dev \
                         postgresql-contrib sqlite3 libsqlite-dev postgresql-client zip gpg dirmngr \
                         cmake htop poppler-utils poppler-data libpoppler-dev libgs-dev ghostscript \
-                        scala haskell-platform silversearcher-ag exuberant-ctags python3-opengl \
-                        xclip libgeos-dev graphviz nmap groovy libboost-all-dev libosmesa6-dev llvm-8 \
+                        exuberant-ctags python3-opengl libffi-dev libsasl2-dev libldap2-dev clang-8 \
+                        xclip libgeos-dev graphviz nmap libboost-all-dev libosmesa6-dev llvm-8 \
                         pkg-config unzip libjpeg-dev swig python-pyglet libsdl2-dev xvfb dos2unix \
-                        python3-pip bison++ flex build-essential file unixodbc-dev jq clang-8 \
-                        libffi-dev libsasl2-dev libldap2-dev
+                        python3-pip bison++ flex build-essential file unixodbc-dev jq python3.6-dev \
 
       if [[ -n `which snap 2> /dev/null` ]]; then
         snap install rg
@@ -242,7 +242,6 @@ if [[ "$my_method" == "install" ]]; then
     elif [[ "$my_pkg_fmt" == "rpm" ]]; then
 
       # TODO - Setup adobe flash repos? Dropbox? Chrome?
-
       set -x
 
       sudo $my_pkg_mgr update -y
