@@ -332,6 +332,7 @@ elif [[ "$my_platform" == "mingw" || "$my_platform" == "cygwin" ]]; then
 
   my_distro="Windows"
   my_install=""
+  my_host_platform="windows"
 
   if [[ "$my_platform" == "mingw" ]]; then # MinGW
 #   NOTE - You can use install if you want, but you need to know to use

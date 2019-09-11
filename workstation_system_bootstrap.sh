@@ -17,6 +17,9 @@ launch_browser() {
     xdg-open "$1"
   elif [[ "$my_platform" == "darwin" ]]; then
     open "$1"
+  elif [[ "$my_host_platform" == "windows" ]]; then
+    # NOTE: cmd.exe needs to be available in your PATH
+    cmd.exe /c start "$1"
   else
     echo "Please visit '$1'"
   fi

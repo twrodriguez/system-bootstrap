@@ -7,19 +7,23 @@ if [[ `uname -s` != "Darwin" ]]; then
   fi
 fi
 
-# Load RVM into a shell session *as a function*
-#[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
 if [[ `uname -s` == "Darwin" ]]; then
   PATH=$PATH:/usr/local/opt/ruby/bin:/usr/local/share/npm/bin # Add Homebrew Ruby & Node Bin to PATH
   PATH=/usr/local/opt/libxml2/lib/pkgconfig:$PATH
   export HISTSIZE=
   export HISTFILESIZE=
 fi
+PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/local/heroku/bin:$PATH
+
+# Windows Subsystem Linux paths
+if [[ -d "/mnt/c/Windows" ]]; then
+  PATH=/mnt/c/Windows:/mnt/c/Windows/System32:$PATH
+fi
 WIN_HOME="/mnt/c/Users/Tim"
-PATH=$WIN_HOME/bin:$HOME/bin:$HOME/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/local/heroku/bin:$PATH
-if [[ -d "/mnt/c/Users/Tim" ]]; then
+if [[ -d "$WIN_HOME" ]]; then
   mkdir -p "$WIN_HOME/bin"
   export WIN_HOME
+  PATH=$WIN_HOME/bin:$PATH
 fi
 PKG_CONFIG_PATH=$PATH
 EDITOR=vim
@@ -41,7 +45,9 @@ fi
 # SSH-Agent for not needing to input passwords every time
 if which ssh-agent > /dev/null; then eval "$(ssh-agent -s)"; fi
 
-export HOMEBREW_GITHUB_API_TOKEN=`cat "$HOME/.github_api_token"`
+if test -f "$HOME/.github_api_token"; then
+  export HOMEBREW_GITHUB_API_TOKEN=`cat "$HOME/.github_api_token"`
+fi
 
 if test -d "$HOME/depot_tools"; then
   PATH=$PATH:$HOME/depot_tools
