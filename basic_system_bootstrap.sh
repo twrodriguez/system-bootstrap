@@ -47,9 +47,42 @@ install_latest_asdf_lang() {
   asdf global "$1" "$version"
 }
 
+setup_kubernetes() {
+  all_asdf_plugins=(helm kubectl minikube stern kubeval golang)
+  for lang in "${all_plugins[@]}"; do
+    asdf plugin-add "$lang"
+    install_latest_asdf_lang "$lang"
+  done
+
+  # Set up kubernetes
+  if [[ "${my_platform}" == "linux" ]]; then
+    if [[ "${my_host_platform}" != "windows" ]]; then
+      # Start k8s via minikube
+      minikube config set disk-size 60g
+      minikube config set memory 4096
+      minikube config set cpus $(expr ${num_cpus} / 2)
+      minikube config set vm-driver virtualbox
+      minikube addons enable heapster
+      minikube addons enable ingress
+      minikube addons enable metrics-server
+      minikube start
+    else
+      # Copy the .kube config from Docker Desktop for Windows
+      if test ! -f "/mnt/c/Users/${WIN_USER}/.kube/config"; then
+        echo "You need to install kubernetes into your Docker Desktop for Windows. Press <Enter> when you have."
+        read
+      fi
+      mkdir -p "${HOME}/.kube"
+      cp "/mnt/c/Users/${WIN_USER}/.kube/config" "${HOME}/.kube"
+    fi
+  fi
+
+  helm init
+}
+
 install_all_asdf_plugins() {
   # TODO: Imagemagick?
-  all_plugins=(helm kubectl minikube elixir julia kotlin python ruby rust scala golang groovy haskell R)
+  all_plugins=(elixir julia kotlin python ruby rust scala golang groovy haskell R)
   for lang in "${all_plugins[@]}"; do
     asdf plugin-add "$lang"
     install_latest_asdf_lang "$lang"
@@ -91,6 +124,13 @@ REPO
 }
 
 tmpdir="$HOME/bootstrap_tmp"
+
+# Get Windows Username
+if grep -q "Microsoft" "/proc/version"; then
+  read -p "Windows Username: " WIN_USER
+  echo "export \$WIN_USER='$WIN_USER'" > "$HOME/.windows_user.sh"
+  export WIN_USER
+fi
 
 mkdir -p $tmpdir
 mkdir -p "$HOME/bin" "$HOME/.ssh" "$HOME/.vim/autoload/airline/themes" "$HOME/.vim/bundle" "$HOME/.vim/syntax"
@@ -212,7 +252,7 @@ if [[ "$my_method" == "install" ]]; then
 
       sudo apt-get upgrade -y
 
-      sudo $my_install binutils gcc rbenv libxslt-dev python python-dev openjdk-8-jdk snap patchelf \
+      sudo $my_install binutils gcc libxslt-dev python python-dev openjdk-8-jdk snap patchelf \
                         python-pip git imagemagick libmagickcore-dev libmagickwand-dev zlib1g-dev \
                         p7zip-full lsb gfortran dnsmasq nodejs libmagic-dev g++ ffmpeg \
                         vim curl wget ca-certificates f2c tmux eclipse libxml++-dev libhunspell-dev \
@@ -245,7 +285,7 @@ if [[ "$my_method" == "install" ]]; then
       set -x
 
       sudo $my_pkg_mgr update -y
-      sudo $my_install binutils* gcc rbenv libxslt-devel python python-devel python-pip wget \
+      sudo $my_install binutils* gcc libxslt-devel python python-devel python-pip wget \
                         git ImageMagick-devel p7zip @development-tools gsl-devel pipenv nmap \
                         kernel-devel openssl nodejs npm dnsmasq file-libs redhat-lsb vim curl \
                         f2c tmux tar curl libxml++-devel hunspell-* tesseract-devel snapd \
@@ -272,15 +312,16 @@ if [[ "$my_method" == "install" ]]; then
 fi
 
 install_all_asdf_plugins
+setup_kubernetes
 
-# Install pylint
-pip install pylint git-lint pipenv
+# Install basic python utilities
+pip install --user pylint git-lint pipenv pipx
 
-# Set up chef environment
-gem install --no-ri --no-rdoc bundler flog reek ruby-lint rubocop sass
+# Install basic ruby utilities
+gem install bundler rake flog reek ruby-lint rubocop sass
 
 # Install JS command line tools
-npm install -g uglify-js less coffee-script grunt-cli csslint jshint eslint babel-eslint eslint-plugin-react
+npm install -g csslint jshint eslint babel-eslint eslint-plugin-react
 
 # Install Vim plugins
 vim_git_clone_or_update "https://github.com/scrooloose/nerdtree.git"
@@ -317,7 +358,8 @@ cd "$HOME/.vim/bundle/powerline-fonts"
 cd -
 
 cd "$HOME/.vim/bundle/command-t/ruby/command-t/ext/command-t"
-rbenv exec ruby extconf.rb
+asdf install
+asdf exec ruby extconf.rb
 make
 cd -
 

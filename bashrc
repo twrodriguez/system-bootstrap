@@ -7,17 +7,21 @@ if [[ `uname -s` != "Darwin" ]]; then
   fi
 fi
 
-# Load RVM into a shell session *as a function*
-#[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
 if [[ `uname -s` == "Darwin" ]]; then
   PATH=$PATH:/usr/local/opt/ruby/bin:/usr/local/share/npm/bin # Add Homebrew Ruby & Node Bin to PATH
   PATH=/usr/local/opt/libxml2/lib/pkgconfig:$PATH
   export HISTSIZE=
   export HISTFILESIZE=
 fi
-WIN_HOME="/mnt/c/Users/Tim"
+
 PATH=$WIN_HOME/bin:$HOME/bin:$HOME/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/local/heroku/bin:$PATH
-if [[ -d "/mnt/c/Users/Tim" ]]; then
+
+if test -f "$HOME/.windows_user.sh"; then
+  . "$HOME/.windows_user.sh"
+fi
+
+WIN_HOME="/mnt/c/Users/$WIN_USER"
+if [[ -d "$WIN_HOME" ]]; then
   mkdir -p "$WIN_HOME/bin"
   export WIN_HOME
 fi
@@ -37,6 +41,19 @@ if [[ -n `which asdf 2> /dev/null` ]]; then
     . $ASDF_HOME/completions/asdf.bash
   fi
 fi
+
+# Kubernetes Completions
+programs=(helm kubectl minikube)
+for prgm in "${programs[@]}"; do
+  if [[ -n `which ${prgm} 2> /dev/null` ]]; then
+    completion_file="${HOME}/.completions/${prgm}.bash"
+    if test ! -f "$HOME/.completions/${prgm}.bash"; then
+      mkdir -p "$(dirname ${completion_file})"
+      ${prgm} completion bash > "${completion_file}"
+    fi
+    . ${completion_file}
+  fi
+done
 
 # SSH-Agent for not needing to input passwords every time
 if which ssh-agent > /dev/null; then eval "$(ssh-agent -s)"; fi
