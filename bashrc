@@ -14,17 +14,20 @@ if [[ `uname -s` == "Darwin" ]]; then
   export HISTFILESIZE=
 fi
 
-PATH=$WIN_HOME/bin:$HOME/bin:$HOME/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/local/heroku/bin:$PATH
-
+# Linux running under a Windows host
 if test -f "$HOME/.windows_user.sh"; then
   . "$HOME/.windows_user.sh"
 fi
 
 WIN_HOME="/mnt/c/Users/$WIN_USER"
 if [[ -d "$WIN_HOME" ]]; then
+  sys32="/mnt/c/Windows/System32"
   mkdir -p "$WIN_HOME/bin"
+  PATH="$WIN_HOME/bin:$PATH"
+  PATH="$sys32/WindowsPowerShell/v1.0:$sys32:/mnt/c/Windows:$PATH"
   export WIN_HOME
 fi
+PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/local/heroku/bin:$PATH
 PKG_CONFIG_PATH=$PATH
 EDITOR=vim
 
@@ -92,12 +95,13 @@ fi
 
 # Clipboard integration
 if [[ `uname -s` == "Linux" ]]; then
-  if grep -q "Microsoft" "/proc/version"; then
-    export DISPLAY=:0
-    alias pbcopy='xclip -selection clipboard'
-  else
-    alias pbcopy='xclip -selection c'
-  fi
+  alias pbcopy='xclip -selection c'
+fi
+
+# Concessions for WSL
+if grep -q "Microsoft" "/proc/version"; then
+  export DOCKER_HOST="tcp://0.0.0.0:2375"
+  export DISPLAY=:0
 fi
 
 # User specific aliases and functions

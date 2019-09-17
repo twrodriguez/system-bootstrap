@@ -48,7 +48,7 @@ install_latest_asdf_lang() {
 }
 
 setup_kubernetes() {
-  all_asdf_plugins=(helm kubectl minikube stern kubeval golang)
+  all_asdf_plugins=(helm kubectl minikube stern kubeval golang terraform)
   for lang in "${all_plugins[@]}"; do
     asdf plugin-add "$lang"
     install_latest_asdf_lang "$lang"
@@ -128,8 +128,12 @@ tmpdir="$HOME/bootstrap_tmp"
 # Get Windows Username
 if grep -q "Microsoft" "/proc/version"; then
   read -p "Windows Username: " WIN_USER
-  echo "export \$WIN_USER='$WIN_USER'" > "$HOME/.windows_user.sh"
+  cat <<-EOF >> "$HOME/.windows_user.sh"
+export \$WIN_USER='$WIN_USER'"
+EOF
   export WIN_USER
+
+  # TODO: Install scoop https://github.com/lukesampson/scoop
 fi
 
 mkdir -p $tmpdir
