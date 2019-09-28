@@ -13,7 +13,9 @@ install_config_file() {
 
 launch_browser() {
   # Launch Browser
-  if [[ "$my_platform" == "linux" ]]; then
+  if [[ -n `which explorer.exe 2> /dev/null` ]]; then
+    explorer.exe "$1"
+  elif [[ "$my_platform" == "linux" ]]; then
     xdg-open "$1"
   elif [[ "$my_platform" == "darwin" ]]; then
     open "$1"

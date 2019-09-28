@@ -11,6 +11,21 @@ install_config_file() {
   echo "Installed $1."
 }
 
+launch_browser() {
+  # Launch Browser
+  if [[ -n `which explorer.exe 2> /dev/null` ]]; then
+    explorer.exe "$1"
+  elif [[ "$my_platform" == "linux" ]]; then
+    xdg-open "$1"
+  elif [[ "$my_platform" == "darwin" ]]; then
+    open "$1"
+  else
+    echo "Please visit '$1'"
+  fi
+  echo "Press Enter to continue"
+  read
+}
+
 git_clone_or_update() {
   if [[ -d "$2" ]]; then
     cd "$2"
@@ -48,11 +63,13 @@ install_latest_asdf_lang() {
 }
 
 setup_kubernetes() {
-  all_asdf_plugins=(helm kubectl minikube stern kubeval golang terraform)
-  for lang in "${all_plugins[@]}"; do
+  set +e
+  all_kube_plugins=(helm kubectl minikube stern kubeval golang terraform)
+  for lang in "${all_kube_plugins[@]}"; do
     asdf plugin-add "$lang"
     install_latest_asdf_lang "$lang"
   done
+  set -e
 
   # Set up kubernetes
   if [[ "${my_platform}" == "linux" ]]; then
@@ -77,12 +94,14 @@ setup_kubernetes() {
     fi
   fi
 
+  asdf reshim
   helm init
 }
 
 install_all_asdf_plugins() {
-  # TODO: Imagemagick?
-  all_plugins=(elixir julia kotlin python ruby rust scala golang groovy haskell R)
+  set +e
+  # TODO: Imagemagick? groovy
+  all_plugins=(elixir julia kotlin python ruby rust scala golang haskell R)
   for lang in "${all_plugins[@]}"; do
     asdf plugin-add "$lang"
     install_latest_asdf_lang "$lang"
@@ -92,6 +111,7 @@ install_all_asdf_plugins() {
   asdf plugin-add nodejs
   bash "$ASDF_HOME/plugins/nodejs/bin/import-release-team-keyring"
   install_latest_asdf_lang nodejs
+  set -e
 }
 
 install_arrow_ubuntu18() {
@@ -127,11 +147,15 @@ tmpdir="$HOME/bootstrap_tmp"
 
 # Get Windows Username
 if grep -q "Microsoft" "/proc/version"; then
-  read -p "Windows Username: " WIN_USER
-  cat <<-EOF >> "$HOME/.windows_user.sh"
-export \$WIN_USER='$WIN_USER'"
+  if test -f "$HOME/.windows_user.sh"; then
+    source "$HOME/.windows_user.sh"
+  else
+    read -p "Windows Username: " WIN_USER
+    cat <<-EOF > "$HOME/.windows_user.sh"
+export WIN_USER='$WIN_USER'
 EOF
-  export WIN_USER
+    export WIN_USER
+  fi
 
   # TODO: Install scoop https://github.com/lukesampson/scoop
 fi
@@ -168,9 +192,9 @@ if [[ `uname -s` == "Darwin" ]]; then
   mv "$tmpdir/irbrc"  "$HOME/.irbrc"
   mv "$tmpdir/vimrc" "$HOME/.vimrc"
   mv "$tmpdir/eslintrc" "$HOME/.eslintrc"
-  mv "$tmpdir/my.cnf" "$HOME/.my.cnf"
+#  mv "$tmpdir/my.cnf" "$HOME/.my.cnf"
   mv "$tmpdir/sed_ri" "$HOME/bin/sed_ri"
-  mv "$tmpdir/search" "$HOME/bin/search"
+#  mv "$tmpdir/search" "$HOME/bin/search"
   mv "$tmpdir/pathogen.vim" "$HOME/.vim/autoload"
 #  mv "$tmpdir/airline_theme.vim" "$HOME/.vim/autoload/airline/themes/airline_theme.vim"
   mv "$tmpdir/python.vim" "$HOME/.vim/syntax"
@@ -190,10 +214,10 @@ else # Linux
   mv "$tmpdir/irbrc"  "$HOME/.irbrc"
   mv "$tmpdir/vimrc" "$HOME/.vimrc"
   mv "$tmpdir/eslintrc" "$HOME/.eslintrc"
-  mv "$tmpdir/fstab"  "$HOME/fstab"
-  mv "$tmpdir/my.cnf" "$HOME/.my.cnf"
+#  mv "$tmpdir/fstab"  "$HOME/fstab"
+#  mv "$tmpdir/my.cnf" "$HOME/.my.cnf"
   mv "$tmpdir/sed_ri" "$HOME/bin/sed_ri"
-  mv "$tmpdir/search" "$HOME/bin/search"
+#  mv "$tmpdir/search" "$HOME/bin/search"
   mv "$tmpdir/pathogen.vim" "$HOME/.vim/autoload"
   mv "$tmpdir/python.vim" "$HOME/.vim/syntax"
   mv "$tmpdir/pyrex.vim" "$HOME/.vim/syntax"
@@ -254,13 +278,18 @@ if [[ "$my_method" == "install" ]]; then
 
       set -x
 
+      sudo apt-get update -y
       sudo apt-get upgrade -y
 
-      sudo $my_install binutils gcc libxslt-dev python python-dev openjdk-8-jdk snap patchelf \
+      if grep -q "Microsoft" "/proc/version"; then
+        sudo apt-get remove openssh-server # Need to re-install from scratch
+      fi
+
+      sudo apt install binutils gcc libxslt-dev python python-dev openjdk-8-jdk snap patchelf \
                         python-pip git imagemagick libmagickcore-dev libmagickwand-dev zlib1g-dev \
-                        p7zip-full lsb gfortran dnsmasq nodejs libmagic-dev g++ ffmpeg \
+                        p7zip-full lsb gfortran dnsmasq nodejs libmagic-dev g++ ffmpeg libcurl4-openssl-dev \
                         vim curl wget ca-certificates f2c tmux eclipse libxml++-dev libhunspell-dev \
-                        hunspell-dictionary-* libxml2-dev libyaml-dev libreadline-dev tesseract-ocr-* \
+                        hunspell-dictionary-* libxml2-dev libyaml-dev libreadline-dev tesseract-ocr-eng \
                         libssl-dev liblapack-dev libmysql++-dev libpq-dev libgsl-dev python3-dev \
                         postgresql-contrib sqlite3 libsqlite-dev postgresql-client zip gpg dirmngr \
                         cmake htop poppler-utils poppler-data libpoppler-dev libgs-dev ghostscript \
@@ -268,15 +297,30 @@ if [[ "$my_method" == "install" ]]; then
                         xclip libgeos-dev graphviz nmap libboost-all-dev libosmesa6-dev llvm-8 \
                         pkg-config unzip libjpeg-dev swig python-pyglet libsdl2-dev xvfb dos2unix \
                         python3-pip bison++ flex build-essential file unixodbc-dev jq python3.6-dev \
-
-      if [[ -n `which snap 2> /dev/null` ]]; then
-        snap install rg
-      fi
+                        openssh-server ssh
 
       ubuntu_version=`lsb_release -r --short`
+      if grep -q "Microsoft" "/proc/version"; then
+        sudo sed -i "s/^\s*#\?\s*PasswordAuthentication no/PasswordAuthentication yes/g" /etc/ssh/sshd_config
+        sudo service ssh --full-restart
+      fi
+
+      # Ripgrep
+      if [ "$ubuntu_version" -le "18.04" ]; then
+        rg_version="11.0.2"
+        rg_file="ripgrep_${rg_version}_amd64.deb"
+        curl -LO "https://github.com/BurntSushi/ripgrep/releases/download/${rg_version}/${rg_file}"
+        sudo dpkg -i "${rg_file}"
+        rm -f "${rg_file}"
+      else
+        sudo apt install ripgrep
+      fi
+
+      # Apache Arrow
       if [[ "$ubuntu_version" == "18.04" ]]; then
         install_arrow_ubuntu18
       fi
+
 
       # Install ASDF language version manager
       install_asdf
@@ -292,9 +336,9 @@ if [[ "$my_method" == "install" ]]; then
       sudo $my_install binutils* gcc libxslt-devel python python-devel python-pip wget \
                         git ImageMagick-devel p7zip @development-tools gsl-devel pipenv nmap \
                         kernel-devel openssl nodejs npm dnsmasq file-libs redhat-lsb vim curl \
-                        f2c tmux tar curl libxml++-devel hunspell-* tesseract-devel snapd \
+                        f2c tmux tar libcurl-devel libxml++-devel hunspell-* tesseract-devel snapd \
                         libxml-devel zlib-devel libyaml-devel readline-devel openssl-devel \
-                        tesseract-langpack-* postgresql-devel mysql-devel sqlite-devel xclip \
+                        tesseract-langpack-eng postgresql-devel mysql-devel sqlite-devel xclip \
                         cmake htop poppler-devel ghostscript-devel scala haskell-platform \
                         the_silver_searcher ctags ripgrep geos-devel ipython-notebook graphviz \
                         golang groovy unixODBC-devel jq lapack-devel gcc-c++ libffi-devel \
@@ -371,6 +415,19 @@ rm -rf "$tmpdir"
 
 # Source the newly-installed bashrc
 source "$HOME/.bashrc"
+
+# Powerline font for PuTTY
+if grep -q "Microsoft" "/proc/version"; then
+  putty_font="https://github.com/powerline/fonts/blob/master/DroidSansMonoDotted/Droid%20Sans%20Mono%20Dotted%20for%20Powerline.ttf"
+  launch_browser "${putty_font}"
+fi
+
+# Generte SSH Key
+if test ! -f "$HOME/.ssh/id_rsa"; then
+  ssh-keygen -t rsa -b 4096
+  cat "$HOME/.ssh/id_rsa.pub" | pbcopy
+  launch_browser "https://github.com/settings/keys"
+fi
 
 # Setup Postgresql & Redis
 # for ubuntu: https://www.digitalocean.com/community/tutorials/how-to-install-and-use-postgresql-on-ubuntu-16-04

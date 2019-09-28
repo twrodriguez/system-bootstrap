@@ -59,9 +59,16 @@ for prgm in "${programs[@]}"; do
 done
 
 # SSH-Agent for not needing to input passwords every time
-if which ssh-agent > /dev/null; then eval "$(ssh-agent -s)"; fi
+if which ssh-agent > /dev/null; then
+  if test -f "$HOME/.ssh/id_rsa"; then
+    eval "$(ssh-agent -s)"
+    ssh-add ~/.ssh/id_rsa
+  fi
+fi
 
-export HOMEBREW_GITHUB_API_TOKEN=`cat "$HOME/.github_api_token"`
+if test -f "$HOME/.github_api_token"; then
+  export HOMEBREW_GITHUB_API_TOKEN=`cat "$HOME/.github_api_token"`
+fi
 
 if test -d "$HOME/depot_tools"; then
   PATH=$PATH:$HOME/depot_tools
