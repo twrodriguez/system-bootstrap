@@ -101,7 +101,7 @@ setup_kubernetes() {
 install_all_asdf_plugins() {
   set +e
   # TODO: Imagemagick? groovy
-  all_plugins=(elixir julia kotlin python ruby rust scala golang haskell R)
+  all_plugins=(elixir julia kotlin python ruby rust scala golang haskell R protoc)
   for lang in "${all_plugins[@]}"; do
     asdf plugin-add "$lang"
     install_latest_asdf_lang "$lang"
@@ -186,42 +186,24 @@ set +x
 source "$tmpdir/env_vars.sh"
 
 # TODO - install ~/.git_template (See http://stackoverflow.com/questions/2293498/git-commit-hooks-global-settings)
+mv "$tmpdir/bashrc"  "$HOME/.bashrc"
+mv "$tmpdir/irbrc"  "$HOME/.irbrc"
+mv "$tmpdir/vimrc" "$HOME/.vimrc"
+mv "$tmpdir/eslintrc" "$HOME/.eslintrc"
+mv "$tmpdir/pathogen.vim" "$HOME/.vim/autoload"
+mv "$tmpdir/python.vim" "$HOME/.vim/syntax"
+mv "$tmpdir/pyrex.vim" "$HOME/.vim/syntax"
+cat "$tmpdir/profile_fns" >> "$HOME/.profile"
+
 if [[ `uname -s` == "Darwin" ]]; then
-  mv "$tmpdir/bashrc"  "$HOME/.bashrc"
   mv "$tmpdir/gitconfig"  "$HOME/.gitconfig"
-  mv "$tmpdir/irbrc"  "$HOME/.irbrc"
-  mv "$tmpdir/vimrc" "$HOME/.vimrc"
-  mv "$tmpdir/eslintrc" "$HOME/.eslintrc"
-#  mv "$tmpdir/my.cnf" "$HOME/.my.cnf"
   mv "$tmpdir/sed_ri" "$HOME/bin/sed_ri"
-#  mv "$tmpdir/search" "$HOME/bin/search"
-  mv "$tmpdir/pathogen.vim" "$HOME/.vim/autoload"
-#  mv "$tmpdir/airline_theme.vim" "$HOME/.vim/autoload/airline/themes/airline_theme.vim"
-  mv "$tmpdir/python.vim" "$HOME/.vim/syntax"
-  mv "$tmpdir/pyrex.vim" "$HOME/.vim/syntax"
 elif [[ `uname -s` =~ "MINGW" ]]; then
-  mv "$tmpdir/bashrc"  "$HOME/.bashrc"
-  mv "$tmpdir/irbrc"  "$HOME/.irbrc"
-  mv "$tmpdir/vimrc" "$HOME/.vimrc"
-  mv "$tmpdir/eslintrc" "$HOME/.eslintrc"
-  mv "$tmpdir/pathogen.vim" "$HOME/.vim/autoload"
-  mv "$tmpdir/python.vim" "$HOME/.vim/syntax"
-  mv "$tmpdir/pyrex.vim" "$HOME/.vim/syntax"
+  echo -n ""
 else # Linux
-  mv "$tmpdir/bashrc"  "$HOME/.bashrc"
   mv "$tmpdir/gitconfig"  "$HOME/.gitconfig"
   mv "$tmpdir/java_home"  "$HOME/bin/java_home"
-  mv "$tmpdir/irbrc"  "$HOME/.irbrc"
-  mv "$tmpdir/vimrc" "$HOME/.vimrc"
-  mv "$tmpdir/eslintrc" "$HOME/.eslintrc"
-#  mv "$tmpdir/fstab"  "$HOME/fstab"
-#  mv "$tmpdir/my.cnf" "$HOME/.my.cnf"
   mv "$tmpdir/sed_ri" "$HOME/bin/sed_ri"
-#  mv "$tmpdir/search" "$HOME/bin/search"
-  mv "$tmpdir/pathogen.vim" "$HOME/.vim/autoload"
-  mv "$tmpdir/python.vim" "$HOME/.vim/syntax"
-  mv "$tmpdir/pyrex.vim" "$HOME/.vim/syntax"
-  echo "Be sure to edit /etc/fstab using ~/fstab as a template"
 fi
 
 # Install Homebrew if on Darwin
