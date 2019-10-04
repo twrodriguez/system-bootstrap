@@ -137,6 +137,10 @@ alias grep='grep --color'
 alias strip-newline="perl -pe 'chomp if eof'"
 alias csv="column -s, -t"
 alias rg="rg --smart-case --colors 'match:fg:magenta' --colors 'line:fg:black' --colors 'column:fg:red' --colors 'path:fg:yellow' -M 1000"
+alias git-ancestry="git log --oneline --graph --decorate --all"
+alias git-lineage="git-ancestry"
+alias git-graph="git-ancestry"
+alias git-network="git-ancestry"
 alias TODO="rg '# (TODO|FIXME|XXX)'"
 
 if [[ -n `which dropbox 2> /dev/null` && -n `which ifconfig 2> /dev/null` ]]; then
