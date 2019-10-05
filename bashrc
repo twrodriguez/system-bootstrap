@@ -38,12 +38,15 @@ if [[ -d "/home/linuxbrew/.linuxbrew" ]]; then
 fi
 
 # ASDF language version manager
-if [[ -n `which asdf 2> /dev/null` ]]; then
+if [[ -z `which asdf 2> /dev/null` ]]; then
+  export ASDF_HOME="$HOME/.asdf"
+else
   export ASDF_HOME=`realpath "$(which asdf | xargs dirname)/.."`
-  if [[ -d "$ASDF_HOME" ]];then
-    . $ASDF_HOME/asdf.sh
-    . $ASDF_HOME/completions/asdf.bash
-  fi
+fi
+
+if [[ -d "$ASDF_HOME" ]];then
+  . $ASDF_HOME/asdf.sh
+  . $ASDF_HOME/completions/asdf.bash
 fi
 
 # Kubernetes Completions
