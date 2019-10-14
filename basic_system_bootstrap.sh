@@ -64,7 +64,7 @@ install_latest_asdf_lang() {
 
 setup_kubernetes() {
   set +e
-  all_kube_plugins=(helm kubectl minikube stern kubeval golang terraform)
+  all_kube_plugins=(helm kubectl minikube stern kubeval golang terraform istioctl)
   for lang in "${all_kube_plugins[@]}"; do
     asdf plugin-add "$lang"
     install_latest_asdf_lang "$lang"

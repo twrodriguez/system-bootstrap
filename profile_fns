@@ -1,5 +1,5 @@
 asdf_upgrade() {
-  version=$(asdf list-all "$1" | grep -o "^[0-9.]\+$" | sort -V | tail -1)
+  version=`asdf list-all "$1" | grep -o "^[0-9.]\+$" | sort -V | tail -1`
   asdf install "$1" "$version"
   asdf global "$1" "$version"
 }
@@ -10,7 +10,7 @@ asdf_install_latest() {
 }
 
 asdf_upgrade_all() {
-  all_installed_plugins=($(asdf plugin-list | grep -v groovy))
+  all_installed_plugins=(`asdf plugin-list | grep -v groovy`)
   for lang in "${all_installed_plugins[@]}"; do
     asdf_upgrade "$lang"
   done
@@ -18,15 +18,40 @@ asdf_upgrade_all() {
 
 launch_browser() {
   # Launch Browser
-  if [[ -n `which explorer.exe 2> /dev/null` ]]; then
+  if test -n `which explorer.exe 2> /dev/null`; then
     explorer.exe "$1"
-  elif [[ "$my_platform" == "linux" ]]; then
+  elif test "$my_platform" == "linux"; then
     xdg-open "$1"
-  elif [[ "$my_platform" == "darwin" ]]; then
+  elif test "$my_platform" == "darwin"; then
     open "$1"
   else
     echo "Please visit '$1'"
   fi
   echo "Press Enter to continue"
   read
+}
+
+venv() {
+  if test -z "$VIRTUAL_ENV"; then
+    if test -f "venv/bin/activate"; then
+      . "venv/bin/activate"
+      echo "Virtualenv activated!"
+    elif test -f "ENV/bin/activate"; then
+      . "ENV/bin/activate"
+      echo "Virtualenv activated!"
+    else
+      echo "Virtualenv not found"
+    fi
+  else
+    deactivate
+    echo "Virtualenv deactivated!"
+  fi
+}
+
+venv_init() {
+  if test -z "$VIRTUAL_ENV"; then
+    if test ! -d "venv" -a ! -d "ENV"; then
+      python -m venv venv
+    fi
+  fi
 }

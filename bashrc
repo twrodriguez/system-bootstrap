@@ -62,24 +62,6 @@ for prgm in "${programs[@]}"; do
   fi
 done
 
-# SSH-Agent for not needing to input passwords every time
-if which ssh-agent > /dev/null; then
-  if test -f "$HOME/.ssh/id_rsa"; then
-    if [[ -n "$SSH_AGENT_PID" ]]; then
-      ssh_agent_pid=`ps x | awk '{ print $1 }' | grep "^${SSH_AGENT_PID}$"`
-      if [[ "$ssh_agent_pid" != "$SSH_AGENT_PID" ]]; then
-        unset SSH_AGENT_PID
-        unset SSH_AUTH_SOCK
-      fi
-    fi
-
-    if [[ -z "$SSH_AGENT_PID" ]]; then
-      eval "$(ssh-agent -s)"
-      ssh-add "$HOME/.ssh/id_rsa"
-    fi
-  fi
-fi
-
 if test -f "$HOME/.github_api_token"; then
   export HOMEBREW_GITHUB_API_TOKEN=`cat "$HOME/.github_api_token"`
 fi
@@ -340,19 +322,20 @@ if [[ `uname -s` == "Darwin" && -z "$SSL_CERT_FILE" ]]; then
   fi
 fi
 
-venv() {
-  if [[ -z "$VIRTUAL_ENV" ]]; then
-    if [[ -f "venv/bin/activate" ]]; then
-      . "venv/bin/activate"
-      echo "Virtualenv activated!"
-    elif [[ -f "ENV/bin/activate" ]]; then
-      . "ENV/bin/activate"
-      echo "Virtualenv activated!"
-    else
-      echo "Virtualenv not found"
+# SSH-Agent for not needing to input passwords every time
+if which ssh-agent > /dev/null; then
+  if test -f "$HOME/.ssh/id_rsa"; then
+    if [[ -n "$SSH_AGENT_PID" ]]; then
+      ssh_agent_pid=`ps x | awk '{ print $1 }' | grep "^${SSH_AGENT_PID}$"`
+      if [[ "$ssh_agent_pid" != "$SSH_AGENT_PID" ]]; then
+        unset SSH_AGENT_PID
+        unset SSH_AUTH_SOCK
+      fi
     fi
-  else
-    deactivate
-    echo "Virtualenv deactivated!"
+
+    if [[ -z "$SSH_AGENT_PID" ]]; then
+      eval "$(ssh-agent -s)"
+      ssh-add "$HOME/.ssh/id_rsa"
+    fi
   fi
-}
+fi
