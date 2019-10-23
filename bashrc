@@ -41,7 +41,12 @@ fi
 if [[ -z `which asdf 2> /dev/null` ]]; then
   export ASDF_HOME="$HOME/.asdf"
 else
-  export ASDF_HOME=`realpath "$(which asdf | xargs dirname)/.."`
+  tmp_asdf_home="$(which asdf | xargs dirname)/.."
+  if [[ -n `which realpath > /dev/null` ]]; then
+    export ASDF_HOME=`realpath "$tmp_asdf_home"`
+  elif [[ -n `which grealpath > /dev/null` ]]; then
+    export ASDF_HOME=`grealpath "$tmp_asdf_home"`
+  fi
 fi
 
 if [[ -d "$ASDF_HOME" ]];then
