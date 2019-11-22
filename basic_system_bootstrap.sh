@@ -230,11 +230,11 @@ if [[ "$my_method" == "install" ]]; then
       set -x
       brew install bash-completion ruby imagemagick p7zip python git gsl llvm@6 bison flex pipenv \
                    heroku-toolbelt gcc node vim tmux gs automake autoconf dnsmasq boost graphviz nmap \
-                   libtool libmagic curl wget tesseract readline libxml++ libxml2 ripgrep \
-                   hunspell libyaml cmake htop-osx poppler gem-completion apache-arrow gpg \
+                   libtool libmagic curl wget tesseract readline libxml++ libxml2 ripgrep libffi \
+                   hunspell libyaml cmake htop-osx poppler gem-completion apache-arrow gpg openssl \
                    pip-completion vagrant-completion ruby-completion rake-completion rails-completion \
                    bundler-completion ctags s3cmd asdf jq coreutils s3cmd docker parquet-tools \
-                   pkg-config libffi openssl docker-compose
+                   pkg-config docker-compose
 
       set +x
 
@@ -346,7 +346,7 @@ install_all_asdf_plugins
 setup_kubernetes
 
 # Install basic python utilities
-pip install --user pylint git-lint pipenv pipx
+pip install --user pylint git-lint pipenv pipx poetry
 
 # Install basic ruby utilities
 gem install bundler rake flog reek ruby-lint rubocop sass
@@ -379,6 +379,7 @@ vim_git_clone_or_update "https://github.com/nathanaelkane/vim-indent-guides.git"
 vim_git_clone_or_update "https://github.com/kien/rainbow_parentheses.vim.git" rainbow_parentheses
 vim_git_clone_or_update "https://github.com/wincent/command-t.git"
 vim_git_clone_or_update "https://github.com/derekwyatt/vim-scala"
+vim_git_clone_or_update "https://github.com/JuliaEditorSupport/julia-vim.git"
 
 cd "$HOME/.vim/bundle/vim-jsbeautify"
 git submodule update --init --recursive

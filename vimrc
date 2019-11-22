@@ -85,9 +85,15 @@ set t_Co=256
 " http://www.linuxpowertop.org/known.php
 let &guicursor = &guicursor . ",a:blinkon0"
 
-au BufNewFile,BufRead *.ctpl set filetype=c
-au BufReadCmd *.jar,*.whl,*.docx,*.xlsx call zip#Browse(expand("<amatch>"))
 set number
+
+" Open as zip files
+au BufReadCmd *.jar,*.whl,*.docx,*.xlsx call zip#Browse(expand("<amatch>"))
+
+" Filetype syntax highlighting
+au BufNewFile,BufRead *.toml set filetype=cfg
+au BufNewFile,BufRead Pipfile set filetype=cfg
+au BufNewFile,BufRead *.ctpl set filetype=c
 
 " Trailing Whitespace
 highlight ExtraWhitespace ctermbg=red guibg=red
