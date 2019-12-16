@@ -29,53 +29,21 @@ launch_browser() {
   read
 }
 
-setup_kubernetes() {
-  # Set up kubernetes
-  minikube config set disk-size 60g
-  minikube config set memory 4096
-  minikube config set cpus 2
-  minikube config set vm-driver virtualbox
-  minikube addons enable heapster
-  minikube addons enable ingress
-  minikube addons enable metrics-server
-  minikube start
-  helm init
-}
-
-install_kubernetes_linux() {
-  # Minikube
-  # if test ! -e "$HOME/minikube"; then
-  #   curl -Lo "$HOME/minikube" "https://storage.googleapis.com/minikube/releases/v0.28.0/minikube-linux-amd64"
-  #   chmod +x "$HOME/minikube"
-  # fi
-
-  # Kubectl
-  # snap install kubectl --classic
-
-  # Helm
-  # if ! command -v helm; then
-  #   mkdir -p "$HOME/.helm"
-  #   curl -Lo "$HOME/.helm/helm_install" "https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get"
-  #   chmod +x "$HOME/.helm/helm_install"
-  #   "$HOME/.helm/helm_install" --version 'latest'
-  # fi
-  install_latest_asdf_lang "minikube"
-  install_latest_asdf_lang "kubectl"
-  install_latest_asdf_lang "helm"
-}
-
-install_latest_asdf_lang() {
-  asdf plugin-add "$1"
+asdf_upgrade() {
   version=$(asdf list-all "$1" | grep -o "^[0-9.]\+$" | sort -V | tail -1)
   asdf install "$1" "$version"
   asdf global "$1" "$version"
 }
 
-install_all_asdf_plugins() {
-  all_plugins=(postgres mysql elasticsearch spark redis mongodb)
-  for lang in "${all_plugins[@]}"; do
-    install_latest_asdf_lang "$lang"
+asdf_install_latest() {
+  for lang in "$@"; do
+    asdf plugin-add "$lang"
+    asdf_upgrade "$lang"
   done
+}
+
+install_all_asdf_plugins() {
+  asdf_install_latest postgres mysql elasticsearch spark redis mongodb minio sqlite
 }
 
 tmpdir="$HOME/bootstrap_tmp"
@@ -169,7 +137,6 @@ if [[ "$my_method" == "install" ]]; then
       brew cask install homebrew/cask-versions/adoptopenjdk8
       brew cask install virtualbox
       brew cask install vagrant
-      brew install minio
 
       install_all_asdf_plugins
       set +x
@@ -214,9 +181,6 @@ if [[ "$my_method" == "install" ]]; then
         snap install slack --classic
       fi
 
-      #install_kubernetes_linux
-      setup_kubernetes
-
       sudo usermod -a -G libvirtd $(whoami)
       newgrp libvirtd
 
@@ -248,9 +212,6 @@ if [[ "$my_method" == "install" ]]; then
         # sudo ln -s /var/lib/snapd/snap /snap
         snap install slack --classic
       fi
-
-      #install_kubernetes_linux
-      setup_kubernetes
 
       sudo usermod -a -G libvirt $(whoami)
       newgrp libvirtd

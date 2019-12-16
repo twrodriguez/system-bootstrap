@@ -11,21 +11,6 @@ install_config_file() {
   echo "Installed $1."
 }
 
-launch_browser() {
-  # Launch Browser
-  if [[ -n `which explorer.exe 2> /dev/null` ]]; then
-    explorer.exe "$1"
-  elif [[ "$my_platform" == "linux" ]]; then
-    xdg-open "$1"
-  elif [[ "$my_platform" == "darwin" ]]; then
-    open "$1"
-  else
-    echo "Please visit '$1'"
-  fi
-  echo "Press Enter to continue"
-  read
-}
-
 git_clone_or_update() {
   if [[ -d "$2" ]]; then
     cd "$2"
@@ -34,15 +19,6 @@ git_clone_or_update() {
   else
     git clone "$1" "$2"
   fi
-}
-
-vim_git_clone_or_update() {
-  dir="$HOME/.vim/bundle/$(basename -s .git "$1")"
-  if [[ -n "$2" ]]; then
-    dir="$HOME/.vim/bundle/$2"
-  fi
-
-  git_clone_or_update "$1" "$dir"
 }
 
 install_asdf() {
@@ -56,19 +32,9 @@ install_asdf() {
   fi
 }
 
-install_latest_asdf_lang() {
-  version=$(asdf list-all "$1" | grep -o "^[0-9.]\+$" | sort -V | tail -1)
-  asdf install "$1" "$version"
-  asdf global "$1" "$version"
-}
-
 setup_kubernetes() {
   set +e
-  all_kube_plugins=(helm kubectl minikube stern kubeval golang terraform istioctl)
-  for lang in "${all_kube_plugins[@]}"; do
-    asdf plugin-add "$lang"
-    install_latest_asdf_lang "$lang"
-  done
+  asdf_install_latest helm kubectl minikube stern kubeval golang terraform istioctl skaffold packer reckoner kops
   set -e
 
   # Set up kubernetes
@@ -100,17 +66,13 @@ setup_kubernetes() {
 
 install_all_asdf_plugins() {
   set +e
-  # TODO: Imagemagick? groovy
-  all_plugins=(elixir julia kotlin python ruby rust scala golang haskell R protoc)
-  for lang in "${all_plugins[@]}"; do
-    asdf plugin-add "$lang"
-    install_latest_asdf_lang "$lang"
-  done
+  # TODO: Imagemagick? groovy?
+  asdf_install_latest elixir julia kotlin python ruby rust scala golang haskell R protoc crystal bazel
 
   # Nodejs has to bootstrap trust
   asdf plugin-add nodejs
   bash "$ASDF_HOME/plugins/nodejs/bin/import-release-team-keyring"
-  install_latest_asdf_lang nodejs
+  asdf_upgrade nodejs
   set -e
 }
 
@@ -141,6 +103,25 @@ REPO
   sudo yum install -y --enablerepo=epel arrow-glib-devel # For GLib (C)
   sudo yum install -y --enablerepo=epel parquet-devel # For Apache Parquet C++
   sudo yum install -y --enablerepo=epel parquet-glib-devel # For Parquet GLib (C)
+}
+
+install_fbec() {
+  # https://github.com/chronoxor/CppSerialization#how-to-build
+  pipx install gil
+  asdf reshim
+  mkdir -p "$HOME/software"
+  fbe_lib="$HOME/software/FastBinaryEncoding"
+  git_clone_or_update "https://github.com/chronoxor/FastBinaryEncoding.git" "$fbe_lib"
+  cd "$fbe_lib"
+  gil update
+  cd -
+  cd "$fbe_lib/build"
+  ./unix.sh
+  # TODO: Windows native
+}
+
+install_capnproto_centos() {
+  echo ""
 }
 
 tmpdir="$HOME/bootstrap_tmp"
@@ -222,37 +203,32 @@ source "$tmpdir/env_vars.sh"
 # Install necessary packages
 source "$HOME/.bashrc"
 if [[ "$my_method" == "install" ]]; then
-  if [[ "$my_platform" == "darwin" ]]; then
-    if [[ "$my_install" == "brew install" ]]; then
+  if which brew &> /dev/null; then
 
-      brew doctor
+    brew doctor
 
+    set -x
+    brew install bash-completion ruby imagemagick p7zip python git gsl llvm@6 bison flex pipenv \
+                 gcc node vim tmux gs automake autoconf dnsmasq boost graphviz nmap capnp \
+                 libtool libmagic curl wget tesseract readline libxml++ libxml2 ripgrep libffi \
+                 hunspell libyaml cmake htop-osx poppler gem-completion apache-arrow gpg openssl \
+                 pip-completion vagrant-completion ruby-completion rake-completion rails-completion \
+                 bundler-completion ctags s3cmd asdf jq coreutils docker parquet-tools \
+                 pkg-config docker-compose openjdk
+
+    set +x
+
+    if [[ -e "/usr/local/lib/ImageMagick" ]]; then
+      cd /usr/local/lib
       set -x
-      brew install bash-completion ruby imagemagick p7zip python git gsl llvm@6 bison flex pipenv \
-                   heroku-toolbelt gcc node vim tmux gs automake autoconf dnsmasq boost graphviz nmap \
-                   libtool libmagic curl wget tesseract readline libxml++ libxml2 ripgrep libffi \
-                   hunspell libyaml cmake htop-osx poppler gem-completion apache-arrow gpg openssl \
-                   pip-completion vagrant-completion ruby-completion rake-completion rails-completion \
-                   bundler-completion ctags s3cmd asdf jq coreutils s3cmd docker parquet-tools \
-                   pkg-config docker-compose
-
+      libmagicks=$(ls libMagick*Q16.dylib)
+      extension=".1.dylib"
+      for FILE in $libmagicks; do
+        BASENAME=$(basename "$FILE" .dylib)
+        ln -s "$FILE" "$BASENAME$extension"
+      done
       set +x
-
-      if [[ -e "/usr/local/lib/ImageMagick" ]]; then
-        cd /usr/local/lib
-        set -x
-        libmagicks=$(ls libMagick*Q16.dylib)
-        extension=".1.dylib"
-        for FILE in $libmagicks; do
-          BASENAME=$(basename "$FILE" .dylib)
-          ln -s "$FILE" "$BASENAME$extension"
-        done
-        set +x
-        cd -
-      fi
-    else
-      echo "Couldn't find 'brew' command. It's highly recommended that you use 'http://brew.sh'"
-      unknown_install_method && exit 1
+      cd -
     fi
   elif [[ "$my_platform" == "linux" ]]; then
     if [[ "$my_pkg_fmt" == "deb" ]]; then
@@ -280,7 +256,7 @@ if [[ "$my_method" == "install" ]]; then
                         xclip libgeos-dev graphviz nmap libboost-all-dev libosmesa6-dev llvm-8 \
                         pkg-config unzip libjpeg-dev swig python-pyglet libsdl2-dev xvfb dos2unix \
                         python3-pip bison++ flex build-essential file unixodbc-dev jq python3.6-dev \
-                        openssh-server ssh
+                        openssh-server ssh capnproto
 
       ubuntu_version=`lsb_release -r --short`
       if grep -q "Microsoft" "/proc/version"; then
@@ -332,6 +308,8 @@ if [[ "$my_method" == "install" ]]; then
       # Install ASDF language version manager
       install_asdf
 
+      # install_capnproto_centos
+
       set +x
 
     else
@@ -354,48 +332,12 @@ gem install bundler rake flog reek ruby-lint rubocop sass
 # Install JS command line tools
 npm install -g csslint jshint eslint babel-eslint eslint-plugin-react
 
-# Install Vim plugins
-vim_git_clone_or_update "https://github.com/scrooloose/nerdtree.git"
-vim_git_clone_or_update "https://github.com/scrooloose/nerdcommenter.git"
-vim_git_clone_or_update "https://github.com/scrooloose/syntastic.git"
-vim_git_clone_or_update "https://github.com/ervandew/supertab.git"
-vim_git_clone_or_update "https://github.com/tpope/vim-rails.git"
-vim_git_clone_or_update "https://github.com/tpope/vim-bundler.git"
-vim_git_clone_or_update "https://github.com/moll/vim-node.git"
-vim_git_clone_or_update "https://github.com/docunext/closetag.vim.git" closetag
-vim_git_clone_or_update "https://github.com/maksimr/vim-jsbeautify.git"
-vim_git_clone_or_update "https://github.com/terryma/vim-multiple-cursors.git"
-vim_git_clone_or_update "https://github.com/mbbill/undotree.git"
-vim_git_clone_or_update "https://github.com/mhinz/vim-signify.git"
-vim_git_clone_or_update "https://github.com/tpope/vim-fugitive.git"
-vim_git_clone_or_update "https://github.com/bling/vim-airline.git"
-vim_git_clone_or_update "https://github.com/dyng/ctrlsf.vim.git"
-#vim_git_clone_or_update "https://github.com/myusuf3/numbers.vim.git" numbers
-vim_git_clone_or_update "https://github.com/powerline/fonts.git" powerline-fonts
-vim_git_clone_or_update "https://github.com/vim-airline/vim-airline-themes"
-vim_git_clone_or_update "https://github.com/mxw/vim-jsx.git"
-vim_git_clone_or_update "https://github.com/leafgarland/typescript-vim.git"
-vim_git_clone_or_update "https://github.com/nathanaelkane/vim-indent-guides.git"
-vim_git_clone_or_update "https://github.com/kien/rainbow_parentheses.vim.git" rainbow_parentheses
-vim_git_clone_or_update "https://github.com/wincent/command-t.git"
-vim_git_clone_or_update "https://github.com/derekwyatt/vim-scala"
-vim_git_clone_or_update "https://github.com/JuliaEditorSupport/julia-vim.git"
-
-cd "$HOME/.vim/bundle/vim-jsbeautify"
-git submodule update --init --recursive
-cd -
-
-cd "$HOME/.vim/bundle/powerline-fonts"
-./install.sh
-cd -
-
-cd "$HOME/.vim/bundle/command-t/ruby/command-t/ext/command-t"
-asdf install
-asdf exec ruby extconf.rb
-make
-cd -
+bash "$tempdir/vim_bootstrap.sh"
 
 rm -rf "$tmpdir"
+
+# Install FastBinaryEncoding
+#install_fbec
 
 # Source the newly-installed bashrc
 source "$HOME/.bashrc"

@@ -7,6 +7,13 @@ if [[ `uname -s` != "Darwin" ]]; then
   fi
 fi
 
+if [ -f "$HOME/.profile" ]; then
+  . "$HOME/.profile"
+fi
+
+# There exist some systems where this isn't set by default...
+stty erase '^?'
+
 if [[ `uname -s` == "Darwin" ]]; then
   PATH=$PATH:/usr/local/opt/ruby/bin:/usr/local/share/npm/bin # Add Homebrew Ruby & Node Bin to PATH
   PATH=/usr/local/opt/libxml2/lib/pkgconfig:$PATH
@@ -33,25 +40,33 @@ PKG_CONFIG_PATH=$PATH
 EDITOR=vim
 
 # Linuxbrew
-if [[ -d "/home/linuxbrew/.linuxbrew" ]]; then
+if test -d "/home/linuxbrew/.linuxbrew"; then
   eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)
+elif test -d "$HOME/.linuxbrew/bin"; then
+  eval $(~/.linuxbrew/bin/brew shellenv)
 fi
 
 # ASDF language version manager
 if [[ -z `which asdf 2> /dev/null` ]]; then
   export ASDF_HOME="$HOME/.asdf"
+elif which brew &> /dev/null; then
+  export ASDF_HOME=$(brew --prefix asdf)
 else
   tmp_asdf_home="$(which asdf | xargs dirname)/.."
-  if [[ -n `which realpath > /dev/null` ]]; then
+  if which realpath &> /dev/null; then
     export ASDF_HOME=`realpath "$tmp_asdf_home"`
-  elif [[ -n `which grealpath > /dev/null` ]]; then
+  elif which grealpath &> /dev/null; then
     export ASDF_HOME=`grealpath "$tmp_asdf_home"`
   fi
 fi
 
 if [[ -d "$ASDF_HOME" ]];then
-  . $ASDF_HOME/asdf.sh
-  . $ASDF_HOME/completions/asdf.bash
+  . "$ASDF_HOME/asdf.sh"
+  if test -f "$ASDF_HOME/completions/asdf.bash"; then
+    . "$ASDF_HOME/completions/asdf.bash"
+  elif test -f "$ASDF_HOME/etc/bash_completion.d/asdf.bash"; then
+    . "$ASDF_HOME/etc/bash_completion.d/asdf.bash"
+  fi
 fi
 
 # Kubernetes Completions

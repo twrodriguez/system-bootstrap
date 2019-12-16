@@ -241,6 +241,7 @@ if [[ "$my_platform" == "linux" ]]; then
     my_pkg_mgr="emerge"
     my_install="emerge"
     my_local_install=""
+  # TODO: Add Alpine Linux w/ pkg manager "apk" to the list
   else
     echo "Warning: Unsupported Linux Distribution, any packages will be compiled from source"
     my_method="build"

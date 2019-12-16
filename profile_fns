@@ -5,11 +5,14 @@ asdf_upgrade() {
 }
 
 asdf_install_latest() {
-  asdf plugin-add "$1"
-  asdf_upgrade "$1"
+  for lang in "$@"; do
+    asdf plugin-add "$1"
+    asdf_upgrade "$1"
+  done
 }
 
 asdf_upgrade_all() {
+  asdf plugin-update --all
   all_installed_plugins=(`asdf plugin-list | grep -v groovy`)
   for lang in "${all_installed_plugins[@]}"; do
     asdf_upgrade "$lang"
@@ -18,11 +21,12 @@ asdf_upgrade_all() {
 
 launch_browser() {
   # Launch Browser
-  if test -n `which explorer.exe 2> /dev/null`; then
+  kernel=$(uname)
+  if which explorer.exe &> /dev/null; then
     explorer.exe "$1"
-  elif test "$my_platform" == "linux"; then
+  elif test "$kernel" == "Linux" -a -n "$DISPLAY"; then
     xdg-open "$1"
-  elif test "$my_platform" == "darwin"; then
+  elif test "$kernel" == "Darwin"; then
     open "$1"
   else
     echo "Please visit '$1'"
