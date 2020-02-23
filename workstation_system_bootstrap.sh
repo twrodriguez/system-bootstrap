@@ -49,7 +49,8 @@ install_all_asdf_plugins() {
 tmpdir="$HOME/bootstrap_tmp"
 
 mkdir -p $tmpdir
-mkdir -p "$HOME/bin" "$HOME/.ssh" "$HOME/.vim/autoload/airline/themes" "$HOME/.vim/bundle" "$HOME/.vim/syntax"
+mkdir -p "$HOME/bin" "$HOME/.ssh"
+mkdir -p "$HOME/.vim/autoload/airline/themes" "$HOME/.vim/bundle" "$HOME/.vim/syntax"
 
 set -x
 if [[ -d "$HOME/Dropbox/code/config" ]]; then

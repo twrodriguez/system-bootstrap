@@ -109,6 +109,7 @@ fi
 
 mkdir -p $tmpdir
 mkdir -p "$HOME/bin" "$HOME/.ssh"
+mkdir -p "$HOME/.vim/autoload/airline/themes" "$HOME/.vim/bundle" "$HOME/.vim/syntax"
 
 set -x
 if test `pwd | xargs basename` == "system-bootstrap"; then
@@ -135,7 +136,13 @@ mv "$tmpdir/pylintrc" "$HOME/.pylintrc"
 mv "$tmpdir/pathogen.vim" "$HOME/.vim/autoload"
 mv "$tmpdir/python.vim" "$HOME/.vim/syntax"
 mv "$tmpdir/pyrex.vim" "$HOME/.vim/syntax"
-cat "$tmpdir/profile_fns" >> "$HOME/.profile"
+if test -f "$HOME/.bash_profile"; then
+  if [[ -z `grep asdf_install_latest "$HOME/.bash_profile"` ]]; then
+    cat "$tmpdir/profile_fns" >> "$HOME/.bash_profile"
+  fi
+else
+  mv "$tmpdir/profile_fns" "$HOME/.bash_profile"
+fi
 
 if [[ `uname -s` == "Darwin" ]]; then
   mv "$tmpdir/gitconfig"  "$HOME/.gitconfig"

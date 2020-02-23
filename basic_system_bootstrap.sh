@@ -67,7 +67,7 @@ setup_kubernetes() {
 install_all_asdf_plugins() {
   set +e
   # TODO: Imagemagick? groovy?
-  asdf_install_latest elixir julia kotlin python ruby rust scala golang haskell R protoc crystal bazel
+  asdf_install_latest elixir julia kotlin python ruby rust scala golang haskell R protoc crystal bazel ripgrep
 
   # Nodejs has to bootstrap trust
   asdf plugin-add nodejs
@@ -142,7 +142,8 @@ EOF
 fi
 
 mkdir -p $tmpdir
-mkdir -p "$HOME/bin" "$HOME/.ssh" "$HOME/.vim/autoload/airline/themes" "$HOME/.vim/bundle" "$HOME/.vim/syntax"
+mkdir -p "$HOME/bin" "$HOME/.ssh"
+mkdir -p "$HOME/.vim/autoload/airline/themes" "$HOME/.vim/bundle" "$HOME/.vim/syntax"
 
 set -x
 if [[ -d "$HOME/Dropbox/code/config" ]]; then
@@ -210,7 +211,7 @@ if [[ "$my_method" == "install" ]]; then
     set -x
     brew install bash-completion ruby imagemagick p7zip python git gsl llvm@6 bison flex pipenv \
                  gcc node vim tmux gs automake autoconf dnsmasq boost graphviz nmap capnp \
-                 libtool libmagic curl wget tesseract readline libxml++ libxml2 ripgrep libffi \
+                 libtool libmagic curl wget tesseract readline libxml++ libxml2 libffi \
                  hunspell libyaml cmake htop-osx poppler gem-completion apache-arrow gpg openssl \
                  pip-completion vagrant-completion ruby-completion rake-completion rails-completion \
                  bundler-completion ctags s3cmd asdf jq coreutils docker parquet-tools \
@@ -264,17 +265,6 @@ if [[ "$my_method" == "install" ]]; then
         sudo service ssh --full-restart
       fi
 
-      # Ripgrep
-      if [ "$ubuntu_version" -le "18.04" ]; then
-        rg_version="11.0.2"
-        rg_file="ripgrep_${rg_version}_amd64.deb"
-        curl -LO "https://github.com/BurntSushi/ripgrep/releases/download/${rg_version}/${rg_file}"
-        sudo dpkg -i "${rg_file}"
-        rm -f "${rg_file}"
-      else
-        sudo apt install ripgrep
-      fi
-
       # Apache Arrow
       if [[ "$ubuntu_version" == "18.04" ]]; then
         install_arrow_ubuntu18
@@ -299,7 +289,7 @@ if [[ "$my_method" == "install" ]]; then
                         libxml-devel zlib-devel libyaml-devel readline-devel openssl-devel \
                         tesseract-langpack-eng postgresql-devel mysql-devel sqlite-devel xclip \
                         cmake htop poppler-devel ghostscript-devel scala haskell-platform \
-                        the_silver_searcher ctags ripgrep geos-devel ipython-notebook graphviz \
+                        the_silver_searcher ctags geos-devel ipython-notebook graphviz \
                         golang groovy unixODBC-devel jq lapack-devel gcc-c++ libffi-devel \
                         openldap-devel libsasl2-devel gnupg clang llvm-devel dirmngr
 

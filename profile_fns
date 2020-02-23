@@ -6,8 +6,8 @@ asdf_upgrade() {
 
 asdf_install_latest() {
   for lang in "$@"; do
-    asdf plugin-add "$1"
-    asdf_upgrade "$1"
+    asdf plugin-add "$lang"
+    asdf_upgrade "$lang"
   done
 }
 
