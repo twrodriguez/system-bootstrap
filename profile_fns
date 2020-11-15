@@ -1,6 +1,16 @@
+#!/bin/sh
+
 asdf_upgrade() {
-  version=`asdf list-all "$1" | grep -o "^[0-9.]\+$" | sort -V | tail -1`
-  asdf install "$1" "$version"
+  version="$(asdf list-all "$1" | grep -o "^v\?[0-9.]\+$" | sort -V | tail -1)"
+  if test "$1" == "julia"; then
+    echo "n" | asdf install "$1" "$version"
+  else
+    asdf install "$1" "$version"
+  fi
+
+  if test "$1" == "poetry"; then
+    remove_poetry_asdf_path_modifications
+  fi
   asdf global "$1" "$version"
 }
 
@@ -13,16 +23,24 @@ asdf_install_latest() {
 
 asdf_upgrade_all() {
   asdf plugin-update --all
-  all_installed_plugins=(`asdf plugin-list | grep -v groovy`)
+  all_installed_plugins=("$(asdf plugin-list | grep -v groovy)")
   for lang in "${all_installed_plugins[@]}"; do
     asdf_upgrade "$lang"
   done
 }
 
+remove_poetry_asdf_path_modifications() {
+  if test "${kernel}" == "Darwin" ; then
+    sed -i '' "s/^\s*export PATH=.*asdf[^:]*poetry.*$//g" .profile .bash_profile
+  elif test "${kernel}" == "Linux" ; then
+    sed -i "s/^\s*export PATH=.*asdf[^:]*poetry.*$//g" .profile .bash_profile
+  fi
+}
+
 launch_browser() {
   # Launch Browser
   kernel=$(uname)
-  if which explorer.exe &> /dev/null; then
+  if command -v explorer.exe > /dev/null; then
     explorer.exe "$1"
   elif test "$kernel" == "Linux" -a -n "$DISPLAY"; then
     xdg-open "$1"

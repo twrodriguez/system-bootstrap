@@ -228,3 +228,6 @@ let g:rbpt_colorpairs = [
 :map! <C-E> <End>
 :map! <ESC>[H <Home>
 :map! <ESC>[F <End>
+
+" Paste mode toggle
+set pastetoggle=<F8>

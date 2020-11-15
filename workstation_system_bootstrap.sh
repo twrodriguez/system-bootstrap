@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/sh -e
 
 unknown_install_method() {
   echo "Not sure how to install the necessary packages"
@@ -43,7 +43,7 @@ asdf_install_latest() {
 }
 
 install_all_asdf_plugins() {
-  asdf_install_latest postgres mysql elasticsearch spark redis mongodb minio sqlite
+  asdf_install_latest postgres mysql elasticsearch spark redis mongodb minio sqlite vagrant cockroach
 }
 
 tmpdir="$HOME/bootstrap_tmp"
@@ -137,7 +137,6 @@ if [[ "$my_method" == "install" ]]; then
       brew install caskroom/cask/brew-cask
       brew cask install homebrew/cask-versions/adoptopenjdk8
       brew cask install virtualbox
-      brew cask install vagrant
 
       install_all_asdf_plugins
       set +x

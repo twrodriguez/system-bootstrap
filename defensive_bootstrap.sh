@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/sh -e
 
 unknown_install_method() {
   echo "Not sure how to install the necessary packages"

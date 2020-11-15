@@ -1,18 +1,16 @@
-#!/bin/bash -e
+#!/bin/sh -e
 
 git_clone_or_update() {
-  if [[ -d "$2" ]]; then
-    cd "$2"
-    git pull
-    cd -
+  if test -d "${2}"; then
+    bash -c "cd \"${2}\" && git pull"
   else
-    git clone "$1" "$2"
+    git clone "${1}" "${2}"
   fi
 }
 
 vim_git_clone_or_update() {
   dir="$HOME/.vim/bundle/$(basename -s .git "$1")"
-  if [[ -n "$2" ]]; then
+  if test -n "$2"; then
     dir="$HOME/.vim/bundle/$2"
   fi
 
